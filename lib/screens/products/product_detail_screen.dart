@@ -132,8 +132,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   imageUrl: images[index],
                   fit: BoxFit.cover,
                   width: double.infinity,
-                  placeholder: (_, __) => _imagePlaceholder(),
-                  errorWidget: (_, __, ___) => _imagePlaceholder(),
+                  placeholder: (_, _) => _imagePlaceholder(),
+                  errorWidget: (_, _, _) => _imagePlaceholder(),
                 );
               },
             )
@@ -155,7 +155,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   decoration: BoxDecoration(
                     color: _currentImageIndex == index
                         ? AppColors.primary
-                        : AppColors.grey.withOpacity(0.5),
+                        : AppColors.grey.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -211,7 +211,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
+        color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -332,7 +332,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       case 'grey stone':
         return Colors.grey;
       default:
-        return AppColors.primary.withOpacity(0.3);
+        return AppColors.primary.withValues(alpha: 0.3);
     }
   }
 
@@ -397,7 +397,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         color: AppColors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -417,7 +417,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.grey.withOpacity(0.3)),
+border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
                 ),
                 child: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -494,7 +494,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildQuantitySelector() {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.grey.withOpacity(0.3)),
+        border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(

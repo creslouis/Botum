@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/order_model.dart';
@@ -72,7 +71,7 @@ class _OrderCard extends StatelessWidget {
       child: ExpansionTile(
         initiallyExpanded: false,
         leading: CircleAvatar(
-          backgroundColor: _statusColor.withOpacity(0.2),
+          backgroundColor: _statusColor.withValues(alpha: 0.2),
           child: Text(
             order.itemCount.toString(),
             style: TextStyle(
@@ -92,7 +91,7 @@ class _OrderCard extends StatelessWidget {
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: _statusColor.withOpacity(0.2),
+            color: _statusColor.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(

@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         CircleAvatar(
           radius: 22,
-          backgroundColor: AppColors.primary.withOpacity(0.1),
+          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
           backgroundImage: user?.photoUrl != null
               ? CachedNetworkImageProvider(user!.photoUrl!)
               : null,
@@ -221,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: AppColors.white.withOpacity(0.15),
+                color: AppColors.white.withValues(alpha: 0.15),
               ),
               margin: const EdgeInsets.only(right: 16),
               child: const Center(

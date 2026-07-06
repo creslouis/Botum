@@ -3,8 +3,8 @@ import '../models/cart_item_model.dart';
 
 /// Placeholder — Hokdo will implement this provider.
 class CartProvider extends ChangeNotifier {
-  List<CartItemModel> _items = [];
-  bool _isLoading = false;
+  final List<CartItemModel> _items = [];
+  final bool _isLoading = false;
 
   List<CartItemModel> get items => _items;
   int get itemCount => _items.length;

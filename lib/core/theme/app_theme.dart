@@ -48,11 +48,11 @@ class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.grey.withOpacity(0.3)),
+          borderSide: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.grey.withOpacity(0.3)),
+          borderSide: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -71,7 +71,7 @@ class AppTheme {
           fontSize: 14,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.cardBackground,
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -86,7 +86,7 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
       ),
       dividerTheme: DividerThemeData(
-        color: AppColors.grey.withOpacity(0.2),
+        color: AppColors.grey.withValues(alpha: 0.2),
         thickness: 1,
       ),
     );
@@ -124,18 +124,18 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.white.withOpacity(0.1),
+        fillColor: AppColors.white.withValues(alpha: 0.1),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.white.withOpacity(0.3)),
+          borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.white.withOpacity(0.3)),
+          borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -145,7 +145,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.error),
         ),
-        hintStyle: GoogleFonts.inter(color: AppColors.white.withOpacity(0.5)),
+        hintStyle: GoogleFonts.inter(color: AppColors.white.withValues(alpha: 0.5)),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.black,

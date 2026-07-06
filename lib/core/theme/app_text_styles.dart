@@ -80,7 +80,7 @@ class AppTextStyles {
   static TextStyle get subtitle => GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    color: AppColors.textOnDark.withOpacity(0.7),
+    color: AppColors.textOnDark.withValues(alpha: 0.7),
   );
 
   static TextStyle get link => GoogleFonts.inter(

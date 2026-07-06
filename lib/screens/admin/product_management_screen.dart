@@ -8,9 +8,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../core/constants/app_constants.dart';
 import '../../models/product_model.dart';
 import '../../services/firestore_service.dart';
-import '../../services/storage_service.dart';
 import '../../providers/auth_provider.dart';
-import '../../app/routes.dart';
 
 class AdminProductManagementScreen extends StatefulWidget {
   final String? editProductId;
@@ -25,10 +23,6 @@ class AdminProductManagementScreen extends StatefulWidget {
 class _AdminProductManagementScreenState
     extends State<AdminProductManagementScreen> {
   final _firestore = FirestoreService();
-  final _storage = StorageService();
-  final _picker = ImagePicker();
-
-  bool _isAdding = false;
 
   @override
   Widget build(BuildContext context) {
@@ -177,11 +171,11 @@ class _ProductListItem extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: product.images.first,
                         fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(
+                        placeholder: (_, _) => Container(
                           color: AppColors.lightGrey,
                           child: const Icon(Icons.image, color: AppColors.grey),
                         ),
-                        errorWidget: (_, __, ___) => Container(
+                        errorWidget: (_, _, _) => Container(
                           color: AppColors.lightGrey,
                           child: const Icon(Icons.broken_image, color: AppColors.grey),
                         ),
@@ -330,7 +324,7 @@ class _ProductFormState extends State<_ProductForm> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: AppConstants.categories.map((c) {
                   return DropdownMenuItem(value: c, child: Text(c));

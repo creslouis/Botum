@@ -22,7 +22,6 @@ class AccountCollisionException implements Exception {
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   Stream<User?> get userChanges => _auth.userChanges();
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -39,21 +38,6 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final methods = await _auth.fetchSignInMethodsForEmail(email.trim());
-
-    if (methods.isNotEmpty) {
-      if (_auth.currentUser?.isAnonymous == true) {
-        return await _linkAnonymousWithEmail(
-          email: email.trim(),
-          password: password,
-        );
-      }
-      throw FirebaseAuthException(
-        code: 'email-already-in-use',
-        message: 'An account already exists with this email.',
-      );
-    }
-
     if (_auth.currentUser?.isAnonymous == true) {
       return await _linkAnonymousWithEmail(
         email: email.trim(),
@@ -79,20 +63,12 @@ class AuthService {
   }
 
   Future<UserCredential> signInWithGoogle() async {
-    await _googleSignIn.signOut();
+    await GoogleSignIn.instance.signOut();
 
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) {
-      throw FirebaseAuthException(
-        code: 'sign-in-cancelled',
-        message: 'Google sign in was cancelled.',
-      );
-    }
-
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
+    final GoogleSignInAccount googleUser =
+        await GoogleSignIn.instance.authenticate();
+    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
 
@@ -155,7 +131,7 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
+    await GoogleSignIn.instance.signOut();
     await FacebookAuth.instance.logOut();
     await _auth.signOut();
   }
@@ -193,11 +169,10 @@ class AuthService {
   }
 
   Future<AuthCredential> _getGoogleCredential() async {
-    await _googleSignIn.signOut();
-    final googleUser = await _googleSignIn.signIn();
-    final googleAuth = await googleUser!.authentication;
+    await GoogleSignIn.instance.signOut();
+    final googleUser = await GoogleSignIn.instance.authenticate();
+    final googleAuth = googleUser.authentication;
     return GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
   }

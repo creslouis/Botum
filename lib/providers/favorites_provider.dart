@@ -4,7 +4,7 @@ import '../models/product_model.dart';
 /// Placeholder — Rithy will implement this provider.
 class FavoritesProvider extends ChangeNotifier {
   final List<ProductModel> _favorites = [];
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   List<ProductModel> get favorites => _favorites;
   int get favoriteCount => _favorites.length;

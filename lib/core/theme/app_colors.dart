@@ -22,7 +22,7 @@ class AppColors {
   static const Color textOnDark = Color(0xFFFFFFFF);
   static const Color textOnLight = Color(0xFF000000);
 
-  static Color get primaryWithOpacity => primary.withOpacity(0.1);
+  static Color get primaryWithOpacity => primary.withValues(alpha: 0.1);
   static Color get scaffoldBackground => white;
 
   static const List<Color> pinkGradient = [
