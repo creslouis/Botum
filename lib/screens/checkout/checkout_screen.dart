@@ -19,6 +19,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  static const _guestUserId = 'guest-checkout';
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController(text: 'Lim Navy');
   final _streetController = TextEditingController(
@@ -40,6 +41,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   bool get _requiresCardInfo =>
       _selectedPayment == 'Mastercard' || _selectedPayment == 'Paypal';
+
+  String get _checkoutModeLabel => 'Guest checkout';
 
   @override
   void dispose() {
@@ -76,6 +79,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$_checkoutModeLabel is enabled. We only require your shipping and payment details to place the order.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                 ),
                 const SizedBox(height: 14),
                 for (final method in _paymentMethods) ...[
@@ -175,6 +185,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 12),
                       _SummaryRow(
+                        label: 'Subtotal',
+                        value: '\$${cartProvider.subtotal.toStringAsFixed(2)}',
+                      ),
+                      const SizedBox(height: 12),
+                      _SummaryRow(
+                        label: 'Shipping Fee',
+                        value: cartProvider.shippingFee == 0
+                            ? 'Free'
+                            : '\$${cartProvider.shippingFee.toStringAsFixed(2)}',
+                      ),
+                      if (cartProvider.shippingFee == 0) ...[
+                        const SizedBox(height: 6),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Orders over \$${CartProvider.freeShippingThreshold.toStringAsFixed(0)} get free shipping.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: Colors.black45),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      _SummaryRow(
                         label: 'Total',
                         value:
                             '\$${cartProvider.totalPrice.toStringAsFixed(2)}',
@@ -266,7 +299,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final order = OrderModel(
       orderId: _generateOrderId(),
-      userId: 'guest-user',
+      userId: _guestUserId,
       items: cartProvider.items,
       totalPrice: cartProvider.totalPrice,
       paymentMethod: _selectedPayment,

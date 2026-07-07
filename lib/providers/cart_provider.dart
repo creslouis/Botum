@@ -7,6 +7,9 @@ import '../models/cart_item_model.dart';
 
 class CartProvider extends ChangeNotifier {
   static const _storageKey = 'botum_cart_items';
+  static const int maxQuantityPerItem = 10;
+  static const double standardShippingFee = 3.99;
+  static const double freeShippingThreshold = 100;
 
   final List<CartItemModel> _items = <CartItemModel>[];
   bool _isLoading = false;
@@ -14,10 +17,16 @@ class CartProvider extends ChangeNotifier {
   List<CartItemModel> get items => List<CartItemModel>.unmodifiable(_items);
   bool get isLoading => _isLoading;
 
-  double get totalPrice => _items.fold<double>(
+  double get subtotal => _items.fold<double>(
     0,
     (total, item) => total + (item.price * item.quantity),
   );
+
+  double get shippingFee => _items.isEmpty || subtotal >= freeShippingThreshold
+      ? 0
+      : standardShippingFee;
+
+  double get totalPrice => subtotal + shippingFee;
 
   int get itemCount => _items.length;
 
@@ -52,10 +61,10 @@ class CartProvider extends ChangeNotifier {
     if (index >= 0) {
       final existing = _items[index];
       _items[index] = existing.copyWith(
-        quantity: existing.quantity + item.quantity,
+        quantity: _normalizeQuantity(existing.quantity + item.quantity),
       );
     } else {
-      _items.add(item);
+      _items.add(item.copyWith(quantity: _normalizeQuantity(item.quantity)));
     }
 
     await _persistCart();
@@ -77,7 +86,9 @@ class CartProvider extends ChangeNotifier {
     if (newQuantity <= 0) {
       _items.removeAt(index);
     } else {
-      _items[index] = _items[index].copyWith(quantity: newQuantity);
+      _items[index] = _items[index].copyWith(
+        quantity: _normalizeQuantity(newQuantity),
+      );
     }
 
     await _persistCart();
@@ -108,6 +119,18 @@ class CartProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final payload = _items.map((item) => jsonEncode(item.toMap())).toList();
     await prefs.setStringList(_storageKey, payload);
+  }
+
+  int _normalizeQuantity(int quantity) {
+    if (quantity < 1) {
+      return 1;
+    }
+
+    if (quantity > maxQuantityPerItem) {
+      return maxQuantityPerItem;
+    }
+
+    return quantity;
   }
 
   void _setLoading(bool value) {

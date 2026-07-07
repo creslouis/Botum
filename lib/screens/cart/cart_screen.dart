@@ -114,9 +114,45 @@ class CartScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Total',
+                                  'Subtotal',
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  '\$${cartProvider.subtotal.toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.w800),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  cartProvider.shippingFee == 0
+                                      ? 'Shipping'
+                                      : 'Shipping Fee',
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                Text(
+                                  cartProvider.shippingFee == 0
+                                      ? 'Free'
+                                      : '\$${cartProvider.shippingFee.toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Total',
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.w800),
                                 ),
                                 Text(
                                   '\$${cartProvider.totalPrice.toStringAsFixed(2)}',
@@ -202,6 +238,14 @@ class _EmptyCart extends StatelessWidget {
               ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 22),
+            Text(
+              'Guest checkout is allowed once shipping information is filled in.',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.black45),
+            ),
+            const SizedBox(height: 14),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFE91E8C),
