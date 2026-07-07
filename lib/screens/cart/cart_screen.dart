@@ -83,19 +83,65 @@ class CartScreen extends StatelessWidget {
                             itemCount: cartProvider.items.length,
                             itemBuilder: (context, index) {
                               final item = cartProvider.items[index];
-                              return CartItemTile(
-                                item: item,
-                                onQuantityChanged: (quantity) {
-                                  context.read<CartProvider>().updateQuantity(
-                                    item.productId,
-                                    quantity,
-                                  );
-                                },
-                                onRemove: () {
+                              return Dismissible(
+                                key: ValueKey(
+                                  '${item.productId}-${item.selectedColor}-${item.selectedSize}',
+                                ),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  margin: const EdgeInsets.only(bottom: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
+                                  alignment: Alignment.centerRight,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE85A70),
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: const Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Delete',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                onDismissed: (_) {
                                   context.read<CartProvider>().removeFromCart(
                                     item.productId,
                                   );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        '${item.productName} removed from cart.',
+                                      ),
+                                    ),
+                                  );
                                 },
+                                child: CartItemTile(
+                                  item: item,
+                                  onQuantityChanged: (quantity) {
+                                    context.read<CartProvider>().updateQuantity(
+                                      item.productId,
+                                      quantity,
+                                    );
+                                  },
+                                  onRemove: () {
+                                    context.read<CartProvider>().removeFromCart(
+                                      item.productId,
+                                    );
+                                  },
+                                ),
                               );
                             },
                           ),
