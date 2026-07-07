@@ -59,6 +59,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cartProvider = context.watch<CartProvider>();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFFFBFD),
       appBar: AppBar(title: const Text('Checkout')),
       body: Container(
         decoration: const BoxDecoration(
@@ -121,6 +122,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF2F8),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFF4D5E4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.local_shipping_outlined,
+                        color: Color(0xFFE91E8C),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          cartProvider.shippingFee == 0
+                              ? 'Free shipping unlocked for this order.'
+                              : 'Shipping fee applies until your order reaches \$${CartProvider.freeShippingThreshold.toStringAsFixed(0)}.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 18),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
