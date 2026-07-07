@@ -15,7 +15,10 @@ class CartScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBFD),
       appBar: AppBar(
-        title: const Text('Cart'),
+        title: const Text(
+          'Cart',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         leading: const BackButton(),
         actions: [
           Stack(
@@ -75,7 +78,7 @@ class CartScreen extends StatelessWidget {
                         context.read<CartProvider>().seedDemoItem(),
                   )
                 : Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 0),
                     child: Column(
                       children: [
                         Expanded(
@@ -147,17 +150,17 @@ class CartScreen extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+                          padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Colors.white.withValues(alpha: 0.95),
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(28),
                             ),
                             boxShadow: const [
                               BoxShadow(
-                                color: Color(0x14000000),
-                                blurRadius: 18,
-                                offset: Offset(0, 10),
+                                color: Color(0x10000000),
+                                blurRadius: 16,
+                                offset: Offset(0, 6),
                               ),
                             ],
                           ),
@@ -171,19 +174,22 @@ class CartScreen extends StatelessWidget {
                                     'Subtotal',
                                     style: Theme.of(context)
                                         .textTheme
-                                        .titleLarge
-                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black87,
+                                        ),
                                   ),
                                   Text(
                                     '\$${cartProvider.subtotal.toStringAsFixed(2)}',
                                     style: Theme.of(context)
                                         .textTheme
-                                        .titleLarge
+                                        .titleMedium
                                         ?.copyWith(fontWeight: FontWeight.w800),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -193,18 +199,26 @@ class CartScreen extends StatelessWidget {
                                         ? 'Shipping'
                                         : 'Shipping Fee',
                                     style: Theme.of(context).textTheme.bodyLarge
-                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black54,
+                                        ),
                                   ),
                                   Text(
                                     cartProvider.shippingFee == 0
                                         ? 'Free'
                                         : '\$${cartProvider.shippingFee.toStringAsFixed(2)}',
                                     style: Theme.of(context).textTheme.bodyLarge
-                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: cartProvider.shippingFee == 0
+                                              ? const Color(0xFFE91E8C)
+                                              : Colors.black87,
+                                        ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 12),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -214,34 +228,40 @@ class CartScreen extends StatelessWidget {
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleLarge
-                                        ?.copyWith(fontWeight: FontWeight.w800),
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.black,
+                                        ),
                                   ),
                                   Text(
                                     '\$${cartProvider.totalPrice.toStringAsFixed(2)}',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleLarge
-                                        ?.copyWith(fontWeight: FontWeight.w800),
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black,
+                                        ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 14),
                               Container(
                                 height: 1,
                                 color: const Color(0xFFF0E0E8),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 14),
                               SizedBox(
-                                width: double.infinity,
+                                width: 160,
                                 child: FilledButton(
                                   style: FilledButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE91E8C),
+                                    backgroundColor: Colors.black,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
+                                      vertical: 14,
                                     ),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(26),
+                                      borderRadius: BorderRadius.circular(22),
                                     ),
                                   ),
                                   onPressed: () {
@@ -327,7 +347,7 @@ class _EmptyCart extends StatelessWidget {
                 color: Color(0xFFE91E8C),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Text(
               'Your cart is empty',
               style: Theme.of(
@@ -342,7 +362,7 @@ class _EmptyCart extends StatelessWidget {
                 context,
               ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 18),
             Text(
               'Guest checkout is allowed once shipping information is filled in.',
               textAlign: TextAlign.center,

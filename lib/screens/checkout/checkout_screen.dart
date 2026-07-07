@@ -60,7 +60,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBFD),
-      appBar: AppBar(title: const Text('Checkout')),
+      appBar: AppBar(
+        title: const Text(
+          'Checkout',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -73,7 +78,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              padding: const EdgeInsets.fromLTRB(18, 6, 18, 22),
               children: [
                 Text(
                   'Payment',
@@ -88,7 +93,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 for (final method in _paymentMethods) ...[
                   PaymentOptionTile(
                     title: method,
@@ -100,12 +105,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       });
                     },
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                 ],
                 if (_requiresCardInfo) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _CardPreview(cardNameController: _cardNameController),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   _SectionCard(
                     child: TextFormField(
                       controller: _cardNameController,
@@ -122,14 +127,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
-                    vertical: 12,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF2F8),
+                    color: const Color(0xFFFFF6FA),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: const Color(0xFFF4D5E4)),
                   ),
@@ -155,7 +160,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -209,7 +214,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 18),
                 _SectionCard(
                   child: Column(
                     children: [
@@ -247,16 +252,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             '\$${cartProvider.totalPrice.toStringAsFixed(2)}',
                         emphasize: true,
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
                       SizedBox(
-                        width: double.infinity,
+                        width: 160,
                         child: FilledButton(
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.black,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(22),
                             ),
                           ),
                           onPressed: cartProvider.items.isEmpty || _isSubmitting
@@ -560,13 +565,15 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: backgroundColor.withValues(
+          alpha: backgroundColor == Colors.white ? 0.96 : 1,
+        ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 18,
-            offset: Offset(0, 10),
+            color: Color(0x0D000000),
+            blurRadius: 14,
+            offset: Offset(0, 6),
           ),
         ],
       ),
