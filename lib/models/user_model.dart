@@ -7,6 +7,7 @@ class UserModel {
   final String role; // 'user' or 'admin'
   final DateTime createdAt;
   final List<String> providers;
+  final Map<String, String> socialPhotoUrls;
 
   UserModel({
     required this.uid,
@@ -17,6 +18,7 @@ class UserModel {
     this.role = 'user',
     DateTime? createdAt,
     this.providers = const [],
+    this.socialPhotoUrls = const {},
   }) : createdAt = createdAt ?? DateTime.now();
 
   bool get isAdmin => role == 'admin';
@@ -31,6 +33,7 @@ class UserModel {
       'role': role,
       'createdAt': createdAt.toIso8601String(),
       'providers': providers,
+      'socialPhotoUrls': socialPhotoUrls,
     };
   }
 
@@ -49,6 +52,9 @@ class UserModel {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      socialPhotoUrls: (map['socialPhotoUrls'] as Map<String, dynamic>?)
+              ?.map((key, value) => MapEntry(key, value as String)) ??
+          const {},
     );
   }
 
@@ -61,6 +67,7 @@ class UserModel {
     String? role,
     DateTime? createdAt,
     List<String>? providers,
+    Map<String, String>? socialPhotoUrls,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -71,6 +78,7 @@ class UserModel {
       role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       providers: providers ?? this.providers,
+      socialPhotoUrls: socialPhotoUrls ?? this.socialPhotoUrls,
     );
   }
 }

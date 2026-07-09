@@ -30,6 +30,12 @@ class FirestoreService {
     return UserModel.fromMap(doc.data() as Map<String, dynamic>);
   }
 
+  Future<UserModel?> getUserByEmail(String email) async {
+    final snapshot = await _users.where('email', isEqualTo: email.trim()).limit(1).get();
+    if (snapshot.docs.isEmpty) return null;
+    return UserModel.fromMap(snapshot.docs.first.data() as Map<String, dynamic>);
+  }
+
   Stream<UserModel?> streamUser(String uid) {
     return _users.doc(uid).snapshots().map((snapshot) {
       if (!snapshot.exists) return null;

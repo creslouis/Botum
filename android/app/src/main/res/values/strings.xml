@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Botum</string>
+
+    <!-- Replace these placeholders with your real Meta app values before testing Facebook login. -->
+    <string name="facebook_app_id">2501322253707357</string>
+    <string name="facebook_client_token">976fb13512d59f07c137dd8e54429c0c</string>
+    <string name="fb_login_protocol_scheme">fb2501322253707357</string>
+</resources>

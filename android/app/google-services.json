@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1060182984054",
+    "project_id": "botum-4d2e0",
+    "storage_bucket": "botum-4d2e0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1060182984054:android:f76df0172e8dede4056657",
+        "android_client_info": {
+          "package_name": "com.botum.botum"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1060182984054-70u454j4h69p46oge3m50d7v60fuo9lo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.botum.botum",
+            "certificate_hash": "3fbfb244a88ba8ccee2dccbde39074b1f926ce07"
+          }
+        },
+        {
+          "client_id": "1060182984054-o783s6fvoa4h8flf0eqi62rfp98ocleb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDidrOM6kbLAI_tw0mT8l_0Q4Tx56wVb2g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1060182984054-o783s6fvoa4h8flf0eqi62rfp98ocleb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

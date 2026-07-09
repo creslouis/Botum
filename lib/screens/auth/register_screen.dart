@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../providers/auth_provider.dart';
 import '../../app/routes.dart';
+import '../../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -68,6 +69,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.home);
       }
+    } on AccountCollisionException catch (e) {
+      if (mounted) {
+        await _showCollisionDialog(e);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -89,6 +94,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) {
         Navigator.pushReplacementNamed(context, AppRoutes.home);
       }
+    } on AccountCollisionException catch (e) {
+      if (mounted) {
+        await _showCollisionDialog(e);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,6 +110,155 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _showCollisionDialog(AccountCollisionException collision) async {
+    final auth = context.read<AuthProvider>();
+
+    Future<void> handleProviderChoice(String providerId) async {
+      Navigator.of(context).pop();
+      setState(() => _isLoading = true);
+      try {
+        if (providerId == 'password') {
+          await _showPasswordLinkDialog(collision);
+          return;
+        }
+
+        await auth.resolveCollisionWithProvider(
+          providerId: providerId,
+          pendingCredential: collision.pendingCredential,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Signed in with ${auth.providerLabel(providerId)} and linked your new social account.',
+            ),
+          ),
+        );
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Account Already Exists'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                collision.email.isEmpty
+                    ? 'This social account matches an existing Botum account.'
+                    : 'The email ${collision.email} is already used in Botum.',
+              ),
+              const SizedBox(height: 12),
+              const Text('Sign in with the existing method below to link this social account:'),
+              const SizedBox(height: 12),
+              for (final providerId in collision.existingProviders)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => handleProviderChoice(providerId),
+                      child: Text(auth.providerLabel(providerId)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showPasswordLinkDialog(AccountCollisionException collision) async {
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final auth = context.read<AuthProvider>();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Use Existing Password'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Enter your existing password';
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                Navigator.of(dialogContext).pop();
+                try {
+                  await auth.resolveCollisionWithEmail(
+                    email: collision.email,
+                    password: passwordController.text,
+                    pendingCredential: collision.pendingCredential,
+                  );
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Signed in with email and linked your social account.',
+                      ),
+                    ),
+                  );
+                  Navigator.pushReplacementNamed(context, AppRoutes.home);
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        e.toString().replaceAll('Exception: ', ''),
+                      ),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Sign In and Link'),
+            ),
+          ],
+        );
+      },
+    );
+
+    passwordController.dispose();
   }
 
   Future<void> _guestSignIn() async {
