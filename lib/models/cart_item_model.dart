@@ -1,13 +1,5 @@
 class CartItemModel {
-  final String productId;
-  final String productName;
-  final String productImage;
-  final double price;
-  int quantity;
-  final String? selectedColor;
-  final String? selectedSize;
-
-  CartItemModel({
+  const CartItemModel({
     required this.productId,
     required this.productName,
     required this.productImage,
@@ -16,6 +8,14 @@ class CartItemModel {
     this.selectedColor,
     this.selectedSize,
   });
+
+  final String productId;
+  final String productName;
+  final String productImage;
+  final double price;
+  final int quantity;
+  final String? selectedColor;
+  final String? selectedSize;
 
   double get totalPrice => price * quantity;
 

@@ -1,17 +1,17 @@
 import 'cart_item_model.dart';
 
 class ShippingInfo {
-  final String fullName;
-  final String street;
-  final String city;
-  final String phone;
-
-  ShippingInfo({
+  const ShippingInfo({
     this.fullName = '',
     this.street = '',
     this.city = '',
     this.phone = '',
   });
+
+  final String fullName;
+  final String street;
+  final String city;
+  final String phone;
 
   Map<String, dynamic> toMap() {
     return {
@@ -53,15 +53,6 @@ class ShippingInfo {
 }
 
 class OrderModel {
-  final String orderId;
-  final String userId;
-  final List<CartItemModel> items;
-  final double totalPrice;
-  final String paymentMethod;
-  final ShippingInfo shippingInfo;
-  final String status; // pending, confirmed, shipped, delivered
-  final DateTime createdAt;
-
   OrderModel({
     required this.orderId,
     required this.userId,
@@ -72,6 +63,15 @@ class OrderModel {
     this.status = 'pending',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
+
+  final String orderId;
+  final String userId;
+  final List<CartItemModel> items;
+  final double totalPrice;
+  final String paymentMethod;
+  final ShippingInfo shippingInfo;
+  final String status;
+  final DateTime createdAt;
 
   int get itemCount => items.length;
   int get totalQuantity => items.fold(0, (sum, item) => sum + item.quantity);
@@ -94,14 +94,14 @@ class OrderModel {
       orderId: map['orderId'] as String? ?? '',
       userId: map['userId'] as String? ?? '',
       items: (map['items'] as List<dynamic>?)
-              ?.map((e) =>
-                  CartItemModel.fromMap(e as Map<String, dynamic>))
+              ?.map((item) => CartItemModel.fromMap(item as Map<String, dynamic>))
               .toList() ??
           [],
       totalPrice: (map['totalPrice'] as num?)?.toDouble() ?? 0.0,
       paymentMethod: map['paymentMethod'] as String? ?? '',
       shippingInfo: ShippingInfo.fromMap(
-          map['shippingInfo'] as Map<String, dynamic>? ?? {}),
+        map['shippingInfo'] as Map<String, dynamic>? ?? <String, dynamic>{},
+      ),
       status: map['status'] as String? ?? 'pending',
       createdAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt'] as String) ?? DateTime.now()

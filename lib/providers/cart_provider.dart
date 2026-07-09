@@ -1,50 +1,191 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/cart_item_model.dart';
 
-/// Placeholder — Hokdo will implement this provider.
 class CartProvider extends ChangeNotifier {
-  final List<CartItemModel> _items = [];
-  final bool _isLoading = false;
+  static const _storageKey = 'botum_cart_items';
+  static const int maxQuantityPerItem = 10;
+  static const double standardShippingFee = 3.99;
+  static const double freeShippingThreshold = 100;
 
-  List<CartItemModel> get items => _items;
-  int get itemCount => _items.length;
-  int get totalQuantity => _items.fold(0, (sum, item) => sum + item.quantity);
-  double get totalPrice => _items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  final List<CartItemModel> _items = <CartItemModel>[];
+  bool _isLoading = false;
+
+  List<CartItemModel> get items => List<CartItemModel>.unmodifiable(_items);
   bool get isLoading => _isLoading;
 
-  void addToCart(CartItemModel item) {
-    final index = _items.indexWhere((i) => i.productId == item.productId);
+  double get subtotal => _items.fold<double>(
+        0,
+        (total, item) => total + item.totalPrice,
+      );
+
+  double get shippingFee => _items.isEmpty || subtotal >= freeShippingThreshold
+      ? 0
+      : standardShippingFee;
+
+  double get totalPrice => subtotal + shippingFee;
+
+  int get itemCount => _items.length;
+
+  int get totalQuantity =>
+      _items.fold<int>(0, (total, item) => total + item.quantity);
+
+  Future<void> loadCart() async {
+    _setLoading(true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rawItems = prefs.getStringList(_storageKey) ?? <String>[];
+      _items
+        ..clear()
+        ..addAll(
+          rawItems
+              .map((item) => jsonDecode(item) as Map<String, dynamic>)
+              .map(CartItemModel.fromMap),
+        );
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> addToCart(CartItemModel item) async {
+    final index = _items.indexWhere(
+      (existing) => _matchesLineItem(
+        existing,
+        productId: item.productId,
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
+      ),
+    );
+
     if (index >= 0) {
-      _items[index].quantity += item.quantity;
+      final existing = _items[index];
+      _items[index] = existing.copyWith(
+        quantity: _normalizeQuantity(existing.quantity + item.quantity),
+      );
     } else {
-      _items.add(item);
+      _items.add(item.copyWith(quantity: _normalizeQuantity(item.quantity)));
     }
+
+    await _persistCart();
     notifyListeners();
   }
 
-  void removeFromCart(String productId) {
-    _items.removeWhere((i) => i.productId == productId);
+  Future<void> removeFromCart(
+    String productId, {
+    String? selectedColor,
+    String? selectedSize,
+  }) async {
+    _items.removeWhere(
+      (item) => _matchesLineItem(
+        item,
+        productId: productId,
+        selectedColor: selectedColor,
+        selectedSize: selectedSize,
+      ),
+    );
+    await _persistCart();
     notifyListeners();
   }
 
-  void updateQuantity(String productId, int quantity) {
-    final index = _items.indexWhere((i) => i.productId == productId);
-    if (index >= 0) {
-      if (quantity <= 0) {
-        _items.removeAt(index);
-      } else {
-        _items[index].quantity = quantity;
-      }
-      notifyListeners();
+  Future<void> updateQuantity(
+    String productId,
+    int newQuantity, {
+    String? selectedColor,
+    String? selectedSize,
+  }) async {
+    final index = _items.indexWhere(
+      (item) => _matchesLineItem(
+        item,
+        productId: productId,
+        selectedColor: selectedColor,
+        selectedSize: selectedSize,
+      ),
+    );
+    if (index < 0) {
+      return;
     }
+
+    if (newQuantity <= 0) {
+      _items.removeAt(index);
+    } else {
+      _items[index] = _items[index].copyWith(
+        quantity: _normalizeQuantity(newQuantity),
+      );
+    }
+
+    await _persistCart();
+    notifyListeners();
   }
 
-  void clearCart() {
+  Future<void> clearCart() async {
     _items.clear();
+    await _persistCart();
     notifyListeners();
   }
 
-  bool containsProduct(String productId) {
-    return _items.any((i) => i.productId == productId);
+  bool containsProduct(
+    String productId, {
+    String? selectedColor,
+    String? selectedSize,
+  }) {
+    return _items.any(
+      (item) => _matchesLineItem(
+        item,
+        productId: productId,
+        selectedColor: selectedColor,
+        selectedSize: selectedSize,
+      ),
+    );
+  }
+
+  Future<void> seedDemoItem() async {
+    await addToCart(
+      const CartItemModel(
+        productId: 'demo-cyclo-pin',
+        productName: 'Cyclo Enamel Pin',
+        productImage: '',
+        price: 29.99,
+        quantity: 1,
+        selectedColor: 'Gold',
+        selectedSize: '17 cm',
+      ),
+    );
+  }
+
+  Future<void> _persistCart() async {
+    final prefs = await SharedPreferences.getInstance();
+    final payload = _items.map((item) => jsonEncode(item.toMap())).toList();
+    await prefs.setStringList(_storageKey, payload);
+  }
+
+  int _normalizeQuantity(int quantity) {
+    if (quantity < 1) {
+      return 1;
+    }
+
+    if (quantity > maxQuantityPerItem) {
+      return maxQuantityPerItem;
+    }
+
+    return quantity;
+  }
+
+  bool _matchesLineItem(
+    CartItemModel item, {
+    required String productId,
+    String? selectedColor,
+    String? selectedSize,
+  }) {
+    return item.productId == productId &&
+        item.selectedColor == selectedColor &&
+        item.selectedSize == selectedSize;
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 }
