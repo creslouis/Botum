@@ -13,7 +13,7 @@ class CartScreen extends StatelessWidget {
     final cartProvider = context.watch<CartProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBFD),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Cart',

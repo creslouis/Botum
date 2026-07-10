@@ -23,6 +23,7 @@ class FavoritesScreen extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('My Favorites'),
         centerTitle: true,

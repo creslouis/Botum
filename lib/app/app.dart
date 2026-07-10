@@ -27,6 +27,23 @@ class BotumApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       initialRoute: AppRoutes.welcome,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: Container(color: Colors.white),
+            ),
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/background_pattern.png',
+                fit: BoxFit.cover,
+                opacity: const AlwaysStoppedAnimation(0.80),
+              ),
+            ),
+            child!,
+          ],
+        );
+      },
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case AppRoutes.welcome:

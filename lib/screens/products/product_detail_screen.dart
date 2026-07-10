@@ -52,7 +52,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final isFavorite = favoritesProvider.isFavorite(product.id);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
@@ -132,6 +132,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   imageUrl: images[index],
                   fit: BoxFit.cover,
                   width: double.infinity,
+                  memCacheWidth: 800,
+                  fadeInDuration: const Duration(milliseconds: 300),
+                  useOldImageOnUrlChange: true,
                   placeholder: (_, _) => _imagePlaceholder(),
                   errorWidget: (_, _, _) => _imagePlaceholder(),
                 );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -35,7 +34,7 @@ class _AdminProductManagementScreenState
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Product Management'),
         actions: [
@@ -95,7 +94,7 @@ class _AdminProductManagementScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -105,11 +104,6 @@ class _AdminProductManagementScreenState
           if (isEditing) {
             await _firestore.updateProduct(product.id, data);
           } else {
-            final id = FirebaseFirestore.instance
-                .collection(AppConstants.collectionProducts)
-                .doc()
-                .id;
-            data['id'] = id;
             await _firestore.addProduct(ProductModel.fromMap(data));
           }
           if (ctx.mounted) Navigator.pop(ctx);
@@ -171,6 +165,8 @@ class _ProductListItem extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: product.images.first,
                         fit: BoxFit.cover,
+                        memCacheWidth: 128,
+                        fadeInDuration: const Duration(milliseconds: 300),
                         placeholder: (_, _) => Container(
                           color: AppColors.lightGrey,
                           child: const Icon(Icons.image, color: AppColors.grey),
@@ -238,8 +234,8 @@ class _ProductFormState extends State<_ProductForm> {
   late String _category;
   late List<String> _colors;
   late List<String> _sizes;
-  final ImagePicker _picker = ImagePicker();
-  List<XFile> _selectedImages = [];
+  final TextEditingController _imageUrlCtrl = TextEditingController();
+  late List<String> _imageUrls;
 
   @override
   void initState() {
@@ -254,6 +250,7 @@ class _ProductFormState extends State<_ProductForm> {
     _category = p?.category ?? AppConstants.categories.first;
     _colors = List.from(p?.colors ?? []);
     _sizes = List.from(p?.sizes ?? []);
+    _imageUrls = List.from(p?.images ?? []);
   }
 
   @override
@@ -262,6 +259,7 @@ class _ProductFormState extends State<_ProductForm> {
     _descCtrl.dispose();
     _priceCtrl.dispose();
     _stockCtrl.dispose();
+    _imageUrlCtrl.dispose();
     super.dispose();
   }
 
@@ -352,17 +350,79 @@ class _ProductFormState extends State<_ProductForm> {
                 },
               ),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _pickImages,
-                icon: const Icon(Icons.image),
-                label: Text(_selectedImages.isNotEmpty
-                    ? '${_selectedImages.length} images selected'
-                    : 'Select Images'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.lightGrey,
-                  foregroundColor: AppColors.textOnLight,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _imageUrlCtrl,
+                      decoration: const InputDecoration(
+                        hintText: 'Paste image URL',
+                        prefixIcon: Icon(Icons.link),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () {
+                      final url = _imageUrlCtrl.text.trim();
+                      if (url.isNotEmpty) {
+                        setState(() {
+                          _imageUrls.add(url);
+                          _imageUrlCtrl.clear();
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.add_circle, color: AppColors.primary),
+                  ),
+                ],
               ),
+              if (_imageUrls.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 80,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _imageUrls.length,
+                    separatorBuilder: (_, _)=> const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: CachedNetworkImage(
+                              imageUrl: _imageUrls[index],
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, _, _) => Container(
+                                width: 80,
+                                height: 80,
+                                color: AppColors.lightGrey,
+                                child: const Icon(Icons.broken_image, color: AppColors.grey),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 2,
+                            right: 2,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _imageUrls.removeAt(index)),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: const EdgeInsets.all(2),
+                                child: const Icon(Icons.close, size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _submit,
@@ -376,17 +436,17 @@ class _ProductFormState extends State<_ProductForm> {
     );
   }
 
-  Future<void> _pickImages() async {
-    final images = await _picker.pickMultiImage();
-    if (images.isNotEmpty) {
-      setState(() => _selectedImages = images);
-    }
-  }
-
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final productId = widget.product?.id ??
+        FirebaseFirestore.instance
+            .collection(AppConstants.collectionProducts)
+            .doc()
+            .id;
+
     final data = <String, dynamic>{
+      'id': productId,
       'name': _nameCtrl.text.trim(),
       'description': _descCtrl.text.trim(),
       'price': double.tryParse(_priceCtrl.text.trim()) ?? 0,
@@ -394,6 +454,7 @@ class _ProductFormState extends State<_ProductForm> {
       'colors': _colors,
       'sizes': _sizes,
       'stock': int.tryParse(_stockCtrl.text.trim()) ?? 0,
+      'images': _imageUrls,
       'isActive': true,
       'createdAt': DateTime.now().toIso8601String(),
     };

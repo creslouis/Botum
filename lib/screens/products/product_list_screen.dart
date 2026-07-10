@@ -18,11 +18,13 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchFocusNode.requestFocus();
       final provider = context.read<ProductProvider>();
       if (provider.allProducts.isEmpty) {
         provider.fetchProducts();
@@ -33,6 +35,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -42,7 +45,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     final cartProvider = context.watch<CartProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'All Souvenirs',
@@ -97,6 +100,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: TextField(
         controller: _searchController,
+        focusNode: _searchFocusNode,
         onChanged: (query) {
           context.read<ProductProvider>().searchProducts(query);
         },

@@ -112,6 +112,9 @@ class FavoriteProductTile extends StatelessWidget {
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
+          memCacheWidth: 200,
+          fadeInDuration: const Duration(milliseconds: 300),
+          useOldImageOnUrlChange: true,
           placeholder: (_, _) => _placeholder(),
           errorWidget: (_, _, _) => _placeholder(),
         );

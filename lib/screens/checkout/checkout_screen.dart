@@ -59,7 +59,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cartProvider = context.watch<CartProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBFD),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Checkout',

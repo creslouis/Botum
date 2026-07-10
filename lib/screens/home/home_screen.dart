@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = authProvider.userModel;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -349,18 +349,26 @@ class _HomeScreenState extends State<HomeScreen> {
     return BottomNavigationBar(
       currentIndex: _currentNavIndex,
       onTap: (index) {
+        if (index == 0) {
+          setState(() => _currentNavIndex = 0);
+          return;
+        }
         setState(() => _currentNavIndex = index);
         switch (index) {
-          case 0:
-            break;
           case 1:
-            Navigator.pushNamed(context, AppRoutes.products);
+            Navigator.pushNamed(context, AppRoutes.products).then((_) {
+              if (mounted) setState(() => _currentNavIndex = 0);
+            });
             break;
           case 2:
-            Navigator.pushNamed(context, AppRoutes.favorites);
+            Navigator.pushNamed(context, AppRoutes.favorites).then((_) {
+              if (mounted) setState(() => _currentNavIndex = 0);
+            });
             break;
           case 3:
-            Navigator.pushNamed(context, AppRoutes.profile);
+            Navigator.pushNamed(context, AppRoutes.profile).then((_) {
+              if (mounted) setState(() => _currentNavIndex = 0);
+            });
             break;
         }
       },

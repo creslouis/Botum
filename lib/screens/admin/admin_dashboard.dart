@@ -24,7 +24,7 @@ class AdminDashboard extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
         actions: [

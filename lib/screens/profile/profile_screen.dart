@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = authProvider.userModel;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Profile'),
         centerTitle: true,

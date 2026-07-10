@@ -21,7 +21,7 @@ class AdminOrderManagementScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Order Management')),
       body: StreamBuilder<List<OrderModel>>(
         stream: FirestoreService().getAllOrders(),
