@@ -162,20 +162,7 @@ class _ProductListItem extends StatelessWidget {
                 width: 64,
                 height: 64,
                 child: product.images.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: product.images.first,
-                        fit: BoxFit.cover,
-                        memCacheWidth: 128,
-                        fadeInDuration: const Duration(milliseconds: 300),
-                        placeholder: (_, _) => Container(
-                          color: AppColors.lightGrey,
-                          child: const Icon(Icons.image, color: AppColors.grey),
-                        ),
-                        errorWidget: (_, _, _) => Container(
-                          color: AppColors.lightGrey,
-                          child: const Icon(Icons.broken_image, color: AppColors.grey),
-                        ),
-                      )
+                    ? _buildProductImage(product.images.first)
                     : Container(
                         color: AppColors.lightGrey,
                         child: const Icon(Icons.image, color: AppColors.grey),
@@ -211,6 +198,38 @@ class _ProductListItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProductImage(String url) {
+    if (url.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.cover,
+        memCacheWidth: 128,
+        fadeInDuration: const Duration(milliseconds: 300),
+        placeholder: (_, _) => Container(
+          color: AppColors.lightGrey,
+          child: const Icon(Icons.image, color: AppColors.grey),
+        ),
+        errorWidget: (_, _, _) => Container(
+          color: AppColors.lightGrey,
+          child: const Icon(Icons.broken_image, color: AppColors.grey),
+        ),
+      );
+    } else if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => Container(
+          color: AppColors.lightGrey,
+          child: const Icon(Icons.broken_image, color: AppColors.grey),
+        ),
+      );
+    }
+    return Container(
+      color: AppColors.lightGrey,
+      child: const Icon(Icons.image, color: AppColors.grey),
     );
   }
 }

@@ -118,6 +118,14 @@ class FavoriteProductTile extends StatelessWidget {
           placeholder: (_, _) => _placeholder(),
           errorWidget: (_, _, _) => _placeholder(),
         );
+      } else if (url.startsWith('assets/')) {
+        return Image.asset(
+          url,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, _, _) => _placeholder(),
+        );
       }
     }
     return _placeholder();

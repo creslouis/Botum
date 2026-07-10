@@ -114,7 +114,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildImageCarousel(ProductModel product) {
     final images = product.images;
-    final hasImages = images.isNotEmpty && images.any((url) => url.startsWith('http'));
+    final hasImages = images.isNotEmpty;
 
     return Container(
       height: 320,
@@ -128,16 +128,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   setState(() => _currentImageIndex = index),
               itemCount: images.length,
               itemBuilder: (context, index) {
-                return CachedNetworkImage(
-                  imageUrl: images[index],
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  memCacheWidth: 800,
-                  fadeInDuration: const Duration(milliseconds: 300),
-                  useOldImageOnUrlChange: true,
-                  placeholder: (_, _) => _imagePlaceholder(),
-                  errorWidget: (_, _, _) => _imagePlaceholder(),
-                );
+                final url = images[index];
+                if (url.startsWith('http')) {
+                  return CachedNetworkImage(
+                    imageUrl: url,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    memCacheWidth: 800,
+                    fadeInDuration: const Duration(milliseconds: 300),
+                    useOldImageOnUrlChange: true,
+                    placeholder: (_, _) => _imagePlaceholder(),
+                    errorWidget: (_, _, _) => _imagePlaceholder(),
+                  );
+                } else if (url.startsWith('assets/')) {
+                  return Image.asset(
+                    url,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    errorBuilder: (_, _, _) => _imagePlaceholder(),
+                  );
+                }
+                return _imagePlaceholder();
               },
             )
           else
