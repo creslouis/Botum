@@ -1,1 +1,10 @@
-// Placeholder barrel file for common widgets.
+export 'pink_button.dart';
+export 'custom_text_field.dart';
+export 'social_login_button.dart';
+export 'bottom_nav_bar.dart';
+export 'custom_app_bar.dart';
+export 'pink_button.dart';
+export 'custom_text_field.dart';
+export 'social_login_button.dart';
+export 'bottom_nav_bar.dart';
+export 'custom_app_bar.dart';
