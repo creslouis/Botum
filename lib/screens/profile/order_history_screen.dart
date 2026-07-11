@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -8,6 +10,7 @@ import '../../services/firestore_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/order_card.dart';
 import '../../app/routes.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -21,6 +24,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   List<OrderModel> _orders = [];
   bool _isLoading = true;
   String? _error;
+  StreamSubscription<List<OrderModel>>? _ordersSub; // Bug fix: store subscription for cancellation
 
   @override
   void initState() {
@@ -28,7 +32,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     _loadOrders();
   }
 
-  Future<void> _loadOrders() async {
+  @override
+  void dispose() {
+    _ordersSub?.cancel(); // Bug fix: cancel stream on dispose to prevent memory leak
+    super.dispose();
+  }
+
+  void _loadOrders() {
     final userId = context.read<AuthProvider>().userModel?.uid;
     if (userId == null) {
       setState(() {
@@ -43,23 +53,25 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       _error = null;
     });
 
-    try {
-      _firestoreService.getUserOrders(userId).listen((orders) {
+    _ordersSub?.cancel();
+    _ordersSub = _firestoreService.getUserOrders(userId).listen(
+      (orders) {
         if (mounted) {
           setState(() {
             _orders = orders;
             _isLoading = false;
           });
         }
-      });
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = 'Failed to load orders.';
-        });
-      }
-    }
+      },
+      onError: (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _error = 'Failed to load orders. Please try again.';
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -100,7 +112,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadOrders,
+      onRefresh: () async => _loadOrders(),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: _orders.length,
@@ -185,7 +197,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              Text(
+              const Text(
                 'Order Details',
                 style: TextStyle(
                   fontSize: 20,
@@ -220,14 +232,26 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Container(
+                          child: SizedBox(
                             width: 56,
                             height: 56,
-                            color: AppColors.lightGrey,
-                            child: item.productImage.isNotEmpty
-                                ? Image.network(item.productImage,
-                                    fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.image_outlined))
-                                : const Icon(Icons.image_outlined, color: AppColors.grey),
+                            child: item.productImage.isEmpty
+                                ? Container(
+                                    color: AppColors.lightGrey,
+                                    child: const Icon(Icons.image_outlined, color: AppColors.grey),
+                                  )
+                                : item.productImage.startsWith('http')
+                                    ? CachedNetworkImage(
+                                        imageUrl: item.productImage,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) => Container(color: AppColors.lightGrey),
+                                        errorWidget: (context, url, error) => const Icon(Icons.image_outlined),
+                                      )
+                                    : Image.asset(
+                                        item.productImage,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined),
+                                      ),
                           ),
                         ),
                         const SizedBox(width: 12),

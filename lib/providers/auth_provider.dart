@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import '../core/constants/app_constants.dart';
 
 enum AuthState { initial, loading, authenticated, unauthenticated, error }
 
@@ -130,6 +131,8 @@ class AuthProvider extends ChangeNotifier {
     }
 
     final userDoc = await _firestoreService.getUser(user.uid);
+    final isAutoAdmin = AppConstants.adminEmails.contains(currentUserModel.email.toLowerCase().trim());
+
     if (userDoc != null) {
       _userModel = userDoc.copyWith(
         email: currentUserModel.email,
@@ -139,6 +142,9 @@ class AuthProvider extends ChangeNotifier {
         photoUrl: currentUserModel.photoUrl ?? userDoc.photoUrl,
         phoneNumber: currentUserModel.phoneNumber ?? userDoc.phoneNumber,
         providers: currentUserModel.providers,
+        role: (isAutoAdmin && userDoc.role != AppConstants.userRoleAdmin)
+            ? AppConstants.userRoleAdmin
+            : userDoc.role,
         socialPhotoUrls: {
           ...userDoc.socialPhotoUrls,
           ...socialPhotoUrls,
@@ -150,10 +156,14 @@ class AuthProvider extends ChangeNotifier {
         'photoUrl': _userModel!.photoUrl,
         'phoneNumber': _userModel!.phoneNumber,
         'providers': _userModel!.providers,
+        'role': _userModel!.role,
         'socialPhotoUrls': _userModel!.socialPhotoUrls,
       });
     } else {
-      _userModel = currentUserModel.copyWith(socialPhotoUrls: socialPhotoUrls);
+      _userModel = currentUserModel.copyWith(
+        socialPhotoUrls: socialPhotoUrls,
+        role: isAutoAdmin ? AppConstants.userRoleAdmin : AppConstants.userRoleUser,
+      );
       await _firestoreService.createUser(_userModel!);
     }
 
@@ -179,13 +189,14 @@ class AuthProvider extends ChangeNotifier {
         await _authService.updateDisplayName(displayName);
       }
       final user = credential.user!;
+      final isAutoAdmin = AppConstants.adminEmails.contains(email.toLowerCase().trim());
       final userModel = UserModel(
         uid: user.uid,
         email: user.email ?? email,
         displayName: displayName ?? user.displayName ?? '',
         photoUrl: user.photoURL,
         phoneNumber: user.phoneNumber,
-        role: 'user',
+        role: isAutoAdmin ? AppConstants.userRoleAdmin : AppConstants.userRoleUser,
         createdAt: user.metadata.creationTime ?? DateTime.now(),
         providers: user.providerData.map((p) => p.providerId).toList(),
       );

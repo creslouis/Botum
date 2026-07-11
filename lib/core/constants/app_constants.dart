@@ -48,13 +48,20 @@ class AppConstants {
   static const String userRoleAdmin = 'admin';
   static const String userRoleUser = 'user';
 
+  // Admin emails that are auto-promoted on first sign-in
+  static const List<String> adminEmails = ['kimhengmorm3@gmail.com'];
+
   // Firestore collection names
   static const String collectionUsers = 'users';
   static const String collectionProducts = 'products';
   static const String collectionOrders = 'orders';
   static const String collectionFavorites = 'favorites';
   static const String collectionCart = 'cart';
+  static const String collectionPaymentMethods = 'payment_methods';
+  static const String collectionAppSettings = 'app_settings';
 
+  // Firebase Storage paths
   static const String storageProducts = 'products';
   static const String storageAvatars = 'avatars';
+  static const String storagePaymentMethods = 'payment_methods';
 }

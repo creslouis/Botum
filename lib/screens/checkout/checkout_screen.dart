@@ -1,11 +1,16 @@
 import 'dart:math';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../models/order_model.dart';
+import '../../models/payment_method_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../services/firestore_service.dart';
 import '../../widgets/payment_option_tile.dart';
 import 'order_success_screen.dart';
 
@@ -19,7 +24,6 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  static const _guestUserId = 'guest-checkout';
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController(text: 'Lim Navy');
   final _streetController = TextEditingController(
@@ -28,21 +32,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _cityController = TextEditingController(text: 'Phnom Penh');
   final _phoneController = TextEditingController(text: '+855 98 987 987');
   final _cardNameController = TextEditingController(text: 'Lim Navy');
-  String _selectedPayment = 'Mastercard';
+  String _selectedPaymentName = 'Mastercard';
   bool _isSubmitting = false;
 
-  static const _paymentMethods = <String>[
-    'ABA Payway',
-    'Acleda Bank',
-    'Mastercard',
-    'Paypal',
-    'Cash On Delivery',
-  ];
+  final FirestoreService _firestoreService = FirestoreService();
 
-  bool get _requiresCardInfo =>
-      _selectedPayment == 'Mastercard' || _selectedPayment == 'Paypal';
+  bool _requiresCardInfo(List<PaymentMethodModel> methods) {
+    try {
+      final method = methods.firstWhere((m) => m.name == _selectedPaymentName);
+      return method.requiresCard;
+    } catch (_) {
+      // Fallback logic for backward compatibility
+      return _selectedPaymentName.toLowerCase().contains('card') || 
+             _selectedPaymentName.toLowerCase().contains('paypal');
+    }
+  }
 
-  String get _checkoutModeLabel => 'Guest checkout';
+  String get _checkoutModeLabel {
+    final auth = context.read<AuthProvider>();
+    if (!auth.isAuthenticated || auth.isGuest) {
+      return 'Guest checkout';
+    }
+    return 'Logged in as ${auth.userModel?.displayName ?? auth.userModel?.email ?? 'User'}';
+  }
 
   @override
   void dispose() {
@@ -57,236 +69,234 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = context.watch<CartProvider>();
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         title: const Text(
           'Checkout',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black),
         ),
+        leading: const BackButton(color: Colors.black),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFFBFD), Color(0xFFF8EEF4)],
-          ),
-        ),
-        child: SafeArea(
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 6, 18, 22),
-              children: [
-                Text(
-                  'Payment',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(18, 6, 18, 28),
+            children: [
+              Text(
+                'Payment',
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '$_checkoutModeLabel is enabled. We only require your shipping and payment details to place the order.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-                ),
-                const SizedBox(height: 12),
-                for (final method in _paymentMethods) ...[
-                  PaymentOptionTile(
-                    title: method,
-                    leading: _PaymentBrand(method: method),
-                    isSelected: _selectedPayment == method,
-                    onTap: () {
-                      setState(() {
-                        _selectedPayment = method;
-                      });
-                    },
+              ),
+              const SizedBox(height: 12),
+              
+              // Dynamic Payment Methods from Firestore
+              StreamBuilder<List<PaymentMethodModel>>(
+                stream: _firestoreService.getPaymentMethods(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  
+                  final methods = snapshot.data ?? [];
+                  
+                  // Ensure selected payment is valid, or fallback to first
+                  if (methods.isNotEmpty && 
+                      !methods.any((m) => m.name == _selectedPaymentName)) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        setState(() {
+                          _selectedPaymentName = methods.first.name;
+                        });
+                      }
+                    });
+                  }
+                  
+                  if (methods.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text('No payment methods available.'),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      for (final method in methods) ...[
+                        PaymentOptionTile(
+                          title: method.name,
+                          leading: _PaymentBrandDynamic(method: method),
+                          isSelected: _selectedPaymentName == method.name,
+                          onTap: () {
+                            setState(() {
+                              _selectedPaymentName = method.name;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      if (_requiresCardInfo(methods)) ...[
+                        const SizedBox(height: 8),
+                        _CardPreview(cardNameController: _cardNameController),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: _cardNameController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: _inputDecoration('Name on the card').copyWith(
+                            filled: true,
+                            fillColor: const Color(0xFF2A292C),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                          ),
+                          validator: (value) {
+                            if (!_requiresCardInfo(methods)) {
+                              return null;
+                            }
+                            if ((value ?? '').trim().isEmpty) {
+                              return 'Enter the cardholder name';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Shipping Information',
+                    style: textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ],
-                if (_requiresCardInfo) ...[
-                  const SizedBox(height: 6),
-                  _CardPreview(cardNameController: _cardNameController),
-                  const SizedBox(height: 8),
-                  _SectionCard(
-                    child: TextFormField(
-                      controller: _cardNameController,
-                      decoration: _inputDecoration('Name on the card'),
+              ),
+              _SectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      style: const TextStyle(color: Colors.black),
+                      decoration: _inputDecoration('Full name'),
+                      validator: _requiredValidator('Enter your full name'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _streetController,
+                      style: const TextStyle(color: Colors.black),
+                      decoration: _inputDecoration('Street address'),
+                      validator: _requiredValidator('Enter your street address'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _cityController,
+                      style: const TextStyle(color: Colors.black),
+                      decoration: _inputDecoration('City'),
+                      validator: _requiredValidator('Enter your city'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(color: Colors.black),
+                      decoration: _inputDecoration('Phone number'),
                       validator: (value) {
-                        if (!_requiresCardInfo) {
-                          return null;
+                        final trimmed = (value ?? '').trim();
+                        if (trimmed.isEmpty) {
+                          return 'Enter your phone number';
                         }
-                        if ((value ?? '').trim().isEmpty) {
-                          return 'Enter the cardholder name';
+                        if (trimmed.length < 8) {
+                          return 'Phone number looks too short';
                         }
                         return null;
                       },
                     ),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF6FA),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFF4D5E4)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.local_shipping_outlined,
-                        color: Color(0xFFE91E8C),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          cartProvider.shippingFee == 0
-                              ? 'Free shipping unlocked for this order.'
-                              : 'Shipping fee applies until your order reaches \$${CartProvider.freeShippingThreshold.toStringAsFixed(0)}.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                    const SizedBox(height: 8),
                     Text(
-                      'Shipping Information',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                      _checkoutModeLabel,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    TextButton(onPressed: () {}, child: const Text('Edit')),
                   ],
                 ),
-                _SectionCard(
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: _inputDecoration('Full name'),
-                        validator: _requiredValidator('Enter your full name'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _streetController,
-                        decoration: _inputDecoration('Street address'),
-                        validator: _requiredValidator(
-                          'Enter your street address',
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _cityController,
-                        decoration: _inputDecoration('City'),
-                        validator: _requiredValidator('Enter your city'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: _inputDecoration('Phone number'),
-                        validator: (value) {
-                          final trimmed = (value ?? '').trim();
-                          if (trimmed.isEmpty) {
-                            return 'Enter your phone number';
-                          }
-                          if (trimmed.length < 8) {
-                            return 'Phone number looks too short';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _SectionCard(
-                  child: Column(
-                    children: [
-                      _SummaryRow(
-                        label: 'Items',
-                        value: '${cartProvider.totalQuantity}',
-                      ),
-                      const SizedBox(height: 12),
-                      _SummaryRow(
-                        label: 'Subtotal',
-                        value: '\$${cartProvider.subtotal.toStringAsFixed(2)}',
-                      ),
-                      const SizedBox(height: 12),
-                      _SummaryRow(
-                        label: 'Shipping Fee',
-                        value: cartProvider.shippingFee == 0
-                            ? 'Free'
-                            : '\$${cartProvider.shippingFee.toStringAsFixed(2)}',
-                      ),
-                      if (cartProvider.shippingFee == 0) ...[
-                        const SizedBox(height: 6),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Orders over \$${CartProvider.freeShippingThreshold.toStringAsFixed(0)} get free shipping.',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: Colors.black45),
+              ),
+              const SizedBox(height: 18),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Column(
+                  children: [
+                    _SummaryRow(
+                      label: 'Total',
+                      value: '\$${cartProvider.totalPrice.toStringAsFixed(2)}',
+                      emphasize: true,
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: 160,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
                           ),
                         ),
-                      ],
-                      const SizedBox(height: 12),
-                      _SummaryRow(
-                        label: 'Total',
-                        value: '\$${cartProvider.totalPrice.toStringAsFixed(2)}',
-                        emphasize: true,
+                        onPressed: cartProvider.items.isEmpty || _isSubmitting
+                            ? null
+                            : _submitOrder,
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Pay'),
                       ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: 160,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(22),
-                            ),
-                          ),
-                          onPressed: cartProvider.items.isEmpty || _isSubmitting
-                              ? null
-                              : _submitOrder,
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Pay'),
+                    ),
+                    const SizedBox(height: 10),
+                    if (cartProvider.shippingFee == 0)
+                      Text(
+                        'Free shipping unlocked',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -297,7 +307,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: const Color(0xFFFFFBFD),
+      fillColor: Colors.white.withValues(alpha: 0.92),
+      labelStyle: const TextStyle(color: Colors.black54),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: Color(0xFFE9D7E0)),
@@ -339,12 +350,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _isSubmitting = true;
     });
 
+    // Use firebase auth UID if available, else a generated guest ID
+    final auth = context.read<AuthProvider>();
+    final userId = auth.firebaseUser?.uid ?? 'guest-${DateTime.now().millisecondsSinceEpoch}';
+
     final order = OrderModel(
       orderId: _generateOrderId(),
-      userId: _guestUserId,
+      userId: userId,
       items: cartProvider.items,
       totalPrice: cartProvider.totalPrice,
-      paymentMethod: _selectedPayment,
+      paymentMethod: _selectedPaymentName,
       shippingInfo: ShippingInfo(
         fullName: _nameController.text.trim(),
         street: _streetController.text.trim(),
@@ -358,10 +373,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     var firestoreSaved = false;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('orders')
-          .doc(order.orderId)
-          .set(order.toMap());
+      await _firestoreService.createOrder(order);
       firestoreSaved = true;
     } catch (_) {
       firestoreSaved = false;
@@ -381,7 +393,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Order flow completed, but Firestore is not configured yet in this repo.',
+            'Order created locally, but failed to sync to server.',
           ),
         ),
       );
@@ -401,22 +413,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 }
 
-class _PaymentBrand extends StatelessWidget {
-  const _PaymentBrand({required this.method});
+class _PaymentBrandDynamic extends StatelessWidget {
+  const _PaymentBrandDynamic({required this.method});
 
-  final String method;
+  final PaymentMethodModel method;
 
   @override
   Widget build(BuildContext context) {
-    switch (method) {
-      case 'ABA Payway':
+    if (method.iconUrl.isNotEmpty) {
+      return Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: CachedNetworkImage(
+          imageUrl: method.iconUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const Icon(Icons.payment, size: 20),
+          errorWidget: (context, url, error) => const Icon(Icons.payment, size: 20),
+        ),
+      );
+    }
+
+    // Fallback logic if no image URL is provided
+    switch (method.name.toLowerCase()) {
+      case 'aba payway':
         return _Badge(label: 'ABA', backgroundColor: const Color(0xFF2F6B81));
-      case 'Acleda Bank':
-        return _Badge(
-          label: 'ACLEDA',
-          backgroundColor: const Color(0xFF232A68),
-        );
-      case 'Mastercard':
+      case 'acleda bank':
+        return _Badge(label: 'ACLEDA', backgroundColor: const Color(0xFF232A68));
+      case 'mastercard':
         return const SizedBox(
           width: 42,
           child: Stack(
@@ -439,8 +467,8 @@ class _PaymentBrand extends StatelessWidget {
             ],
           ),
         );
-      case 'Paypal':
-        return _Badge(label: 'PP', backgroundColor: const Color(0xFF1E63C5));
+      case 'paypal':
+        return _PaypalBadge();
       default:
         return const CircleAvatar(
           radius: 18,
@@ -508,7 +536,7 @@ class _CardPreview extends StatelessWidget {
                           : value.text.trim(),
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 22,
                         fontWeight: FontWeight.w700,
                       ),
                     );
@@ -572,6 +600,7 @@ class _SectionCard extends StatelessWidget {
           alpha: backgroundColor == Colors.white ? 0.96 : 1,
         ),
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFF1DCE6)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D000000),
@@ -601,16 +630,52 @@ class _SummaryRow extends StatelessWidget {
     final style = emphasize
         ? Theme.of(
             context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)
+          ).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          )
         : Theme.of(
             context,
-          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600);
+          ).textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          );
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: style),
         Text(value, style: style),
+      ],
+    );
+  }
+}
+
+class _PaypalBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        Text(
+          'P',
+          style: TextStyle(
+            color: Color(0xFF003087),
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            height: 0.9,
+          ),
+        ),
+        Text(
+          'PayPal',
+          style: TextStyle(
+            color: Color(0xFF009CDE),
+            fontWeight: FontWeight.w800,
+            fontSize: 9,
+            height: 0.9,
+          ),
+        ),
       ],
     );
   }

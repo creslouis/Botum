@@ -15,6 +15,8 @@ import '../screens/profile/order_history_screen.dart';
 import '../screens/admin/admin_dashboard.dart';
 import '../screens/admin/product_management_screen.dart';
 import '../screens/admin/order_management_screen.dart';
+import '../screens/admin/payment_management_screen.dart';
+import '../screens/admin/app_settings_screen.dart';
 import 'routes.dart';
 
 class BotumApp extends StatelessWidget {
@@ -118,6 +120,14 @@ class BotumApp extends StatelessWidget {
               builder: (_) => AdminProductManagementScreen(
                 editProductId: productId,
               ),
+            );
+          case AppRoutes.adminPaymentMethods:
+            return MaterialPageRoute(
+              builder: (_) => const AdminPaymentManagementScreen(),
+            );
+          case AppRoutes.adminSettings:
+            return MaterialPageRoute(
+              builder: (_) => const AdminAppSettingsScreen(),
             );
           default:
             return MaterialPageRoute(

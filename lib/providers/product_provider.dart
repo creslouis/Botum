@@ -19,6 +19,7 @@ class ProductProvider extends ChangeNotifier {
   String? get error => _error;
   String get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;
+  bool get usingMockData => _useMockData;
 
   Future<void> fetchProducts() async {
     _isLoading = true;
@@ -28,16 +29,25 @@ class ProductProvider extends ChangeNotifier {
     try {
       final fetched = await _firestoreService.getProductsOnce();
       if (fetched.isEmpty) {
-        _products = _generateMockProducts();
-        _useMockData = true;
+        // Firestore is empty — use mock data as seed only if we have nothing
+        if (_products.isEmpty) {
+          _products = _generateMockProducts();
+          _useMockData = true;
+        }
       } else {
         _products = fetched;
         _useMockData = false;
       }
+      _error = null;
       _applyFilters();
     } catch (e) {
-      _products = _generateMockProducts();
-      _useMockData = true;
+      // Bug fix: only use mock data if we have no existing products,
+      // don't silently replace real data with mock data on errors
+      _error = 'Failed to load products: ${e.toString()}';
+      if (_products.isEmpty) {
+        _products = _generateMockProducts();
+        _useMockData = true;
+      }
       _applyFilters();
     }
 
@@ -90,11 +100,13 @@ class ProductProvider extends ChangeNotifier {
   }
 
   ProductModel? getProductById(String id) {
-    try {
-      return _products.firstWhere((p) => p.id == id);
-    } catch (_) {
-      return null;
-    }
+    // Use safe firstWhere with orElse instead of try/catch
+    return _products.firstWhere(
+      (p) => p.id == id,
+      orElse: () => ProductModel(id: '', name: '', description: '', price: 0),
+    ).id.isEmpty
+        ? null
+        : _products.firstWhere((p) => p.id == id);
   }
 
   List<ProductModel> get productsByCategory {
@@ -134,6 +146,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Keychains',
         colors: ['Brown', 'Natural', 'Dark'],
         sizes: ['10 cm'],
+        features: [
+          'Authentic Angkor Wat design',
+          'Hand-carved by local artisans',
+          'Lightweight and durable',
+          'Perfect souvenir or gift item',
+        ],
         stock: 50,
       ),
       ProductModel(
@@ -145,17 +163,30 @@ class ProductProvider extends ChangeNotifier {
         category: 'Keychains',
         colors: ['White', 'Pink', 'Blue'],
         sizes: ['8 cm'],
+        features: [
+          'Lucky elephant symbol in Khmer culture',
+          'Resin construction',
+          'Vivid color options',
+          'Ideal for keys, bags, backpacks',
+        ],
         stock: 45,
       ),
       ProductModel(
         id: 'mock_3',
-        name: 'Naga Dragon Keychain',
-        description: 'Traditional Naga dragon keychain made of brass. The Naga is a mythical serpent that protects temples in Khmer mythology.',
-        price: 5.99,
+        name: 'Cyclo Enamel Pin',
+        description: 'Carry a piece of Cambodia wherever you go with this beautifully crafted Cyclo Keychain. Inspired by the iconic cyclo, a traditional three-wheeled bicycle that symbolizes Cambodia\'s rich cultural heritage, this souvenir combines elegance with local charm.',
+        price: 29.99,
         images: ['assets/images/product/3.jpg'],
         category: 'Keychains',
         colors: ['Gold', 'Silver', 'Bronze'],
-        sizes: ['12 cm'],
+        sizes: ['17 cm'],
+        features: [
+          'Authentic Cambodian cyclo design',
+          'Premium metal construction with gold-tone plating',
+          'Vibrant enamel detailing',
+          'Lightweight and durable',
+          'Perfect souvenir or gift item',
+        ],
         stock: 30,
       ),
       ProductModel(
@@ -167,6 +198,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Clothing',
         colors: ['Red & White', 'Blue & White', 'Green & White'],
         sizes: ['One Size'],
+        features: [
+          '100% natural cotton',
+          'Traditional Khmer checkered pattern',
+          'Handwoven by local artisans',
+          'Versatile — scarf, headwrap, or decoration',
+        ],
         stock: 100,
       ),
       ProductModel(
@@ -178,6 +215,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Clothing',
         colors: ['Gold', 'Purple', 'Emerald'],
         sizes: ['Standard', 'Long'],
+        features: [
+          'Pure silk construction',
+          'Master-woven traditional Khmer patterns',
+          'Rich, vibrant colors',
+          'Each piece takes days to complete',
+        ],
         stock: 25,
       ),
       ProductModel(
@@ -189,6 +232,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Clothing',
         colors: ['White', 'Black', 'Navy'],
         sizes: ['S', 'M', 'L', 'XL'],
+        features: [
+          'Soft breathable cotton',
+          'Khmer embroidery on collar and cuffs',
+          'Angkor-inspired patterns',
+          'Machine washable',
+        ],
         stock: 60,
       ),
       ProductModel(
@@ -200,6 +249,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Handicraft',
         colors: ['Natural Wood', 'Dark Wood'],
         sizes: ['15 cm', '25 cm', '40 cm'],
+        features: [
+          'Sustainably sourced neem wood',
+          'Hand-carved by Kampong Thom artisans',
+          'Each piece is unique',
+          'Multiple size options',
+        ],
         stock: 15,
       ),
       ProductModel(
@@ -211,6 +266,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Handicraft',
         colors: ['Natural', 'Dyed Pattern'],
         sizes: ['Small', 'Medium', 'Large'],
+        features: [
+          'Handwoven using traditional techniques',
+          'Sustainable bamboo material',
+          'Multiple size options',
+          'Functional and decorative',
+        ],
         stock: 20,
       ),
       ProductModel(
@@ -222,6 +283,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Handicraft',
         colors: ['Sandstone', 'Grey Stone'],
         sizes: ['10 cm', '20 cm'],
+        features: [
+          'Hand-carved sandstone',
+          'Inspired by Angkor temple guardians',
+          'Each piece is unique',
+          'Natural stone veining patterns',
+        ],
         stock: 10,
       ),
       ProductModel(
@@ -233,6 +300,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Jewelry',
         colors: ['Silver'],
         sizes: ['3 cm'],
+        features: [
+          'Sterling silver construction',
+          'Lotus flower design',
+          'Handcrafted by Kampong Luong silversmiths',
+          'Nickel-free, hypoallergenic',
+        ],
         stock: 35,
       ),
       ProductModel(
@@ -244,6 +317,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Jewelry',
         colors: ['Rainbow', 'Red & Gold', 'Blue & Silver'],
         sizes: ['Adjustable'],
+        features: [
+          'Hand-braided cotton',
+          'Traditional Khmer patterns',
+          'Each color has cultural meaning',
+          'Adjustable fit',
+        ],
         stock: 80,
       ),
       ProductModel(
@@ -255,6 +334,12 @@ class ProductProvider extends ChangeNotifier {
         category: 'Jewelry',
         colors: ['White Pearl', 'Golden Pearl'],
         sizes: ['45 cm'],
+        features: [
+          'Freshwater pearls',
+          'Swarovski crystal accents',
+          'Traditional Khmer floral design',
+          'Handcrafted in Phnom Penh',
+        ],
         stock: 20,
       ),
     ];

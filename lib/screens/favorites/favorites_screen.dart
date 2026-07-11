@@ -10,17 +10,30 @@ import '../../models/cart_item_model.dart';
 import '../../widgets/favorite_product_tile.dart';
 import '../../app/routes.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    final favProvider = context.watch<FavoritesProvider>();
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
 
-    if (authProvider.isAuthenticated) {
-      favProvider.setUserId(authProvider.userModel?.uid);
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Bug fix: moved setUserId from build() to didChangeDependencies() to prevent infinite rebuild loops
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isAuthenticated && !authProvider.isGuest) {
+      final uid = authProvider.userModel?.uid;
+      if (uid != null) {
+        Provider.of<FavoritesProvider>(context, listen: false).setUserId(uid);
+      }
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final favProvider = context.watch<FavoritesProvider>();
 
     return Scaffold(
       backgroundColor: Colors.transparent,

@@ -1,4 +1,19 @@
 {
+  "hosting": {
+    "public": "build/web",
+    "site": "botum-souvenir",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
   "firestore": {
     "rules": "firestore.rules"
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/cart_item_model.dart';
 
 class CartItemTile extends StatelessWidget {
@@ -123,22 +123,57 @@ class _ProductImage extends StatelessWidget {
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.network(
-        imageUrl,
-        width: 74,
-        height: 74,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
+    if (imageUrl.startsWith('http')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          width: 74,
+          height: 74,
+          fit: BoxFit.cover,
+          memCacheWidth: 148,
+          placeholder: (context, url) => Container(
+            width: 74,
+            height: 74,
+            color: const Color(0xFFEEC7D9),
+            child: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
+          ),
+          errorWidget: (context, url, error) => Container(
             width: 74,
             height: 74,
             color: const Color(0xFFEEC7D9),
             child: const Icon(Icons.image_not_supported_outlined),
-          );
-        },
+          ),
+        ),
+      );
+    }
+
+    if (imageUrl.startsWith('assets/')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Image.asset(
+          imageUrl,
+          width: 74,
+          height: 74,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: 74,
+            height: 74,
+            color: const Color(0xFFEEC7D9),
+            child: const Icon(Icons.image_not_supported_outlined),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: 74,
+      height: 74,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEC7D9),
+        borderRadius: BorderRadius.circular(16),
       ),
+      child: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
     );
   }
 }

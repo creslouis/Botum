@@ -95,6 +95,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+          if (authProvider.isAdmin) ...[
+            const SizedBox(height: 16),
+            _buildSection(
+              title: 'Admin',
+              children: [
+                _menuTile(
+                  icon: Icons.admin_panel_settings_outlined,
+                  title: 'Admin Dashboard',
+                  subtitle: 'Manage products, orders, and settings',
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.adminDashboard),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           _buildSection(
             title: 'Session',

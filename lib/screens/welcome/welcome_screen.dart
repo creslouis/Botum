@@ -35,10 +35,10 @@ class WelcomeScreen extends StatelessWidget {
             child: Container(
               width: 120,
               height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
-              ),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
+                ),
             ),
           ),
           Positioned(
@@ -49,7 +49,7 @@ class WelcomeScreen extends StatelessWidget {
               height: 90,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(0.16),
+                color: AppColors.primary.withValues(alpha: 0.16),
               ),
             ),
           ),

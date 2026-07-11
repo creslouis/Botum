@@ -7,6 +7,7 @@ class ProductModel {
   final String category; // "Keychains", "Clothing", "Handicraft", "Jewelry"
   final List<String> colors;
   final List<String> sizes;
+  final List<String> features; // Bullet-point feature list for product detail
   final int stock;
   final DateTime createdAt;
   final bool isActive;
@@ -20,6 +21,7 @@ class ProductModel {
     this.category = 'Handicraft',
     this.colors = const [],
     this.sizes = const [],
+    this.features = const [],
     this.stock = 0,
     DateTime? createdAt,
     this.isActive = true,
@@ -35,6 +37,7 @@ class ProductModel {
       'category': category,
       'colors': colors,
       'sizes': sizes,
+      'features': features,
       'stock': stock,
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive,
@@ -60,6 +63,10 @@ class ProductModel {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      features: (map['features'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       stock: (map['stock'] as num?)?.toInt() ?? 0,
       createdAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt'] as String) ?? DateTime.now()
@@ -77,6 +84,7 @@ class ProductModel {
     String? category,
     List<String>? colors,
     List<String>? sizes,
+    List<String>? features,
     int? stock,
     DateTime? createdAt,
     bool? isActive,
@@ -90,6 +98,7 @@ class ProductModel {
       category: category ?? this.category,
       colors: colors ?? this.colors,
       sizes: sizes ?? this.sizes,
+      features: features ?? this.features,
       stock: stock ?? this.stock,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,

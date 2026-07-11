@@ -266,7 +266,9 @@ class _ProductFormState extends State<_ProductForm> {
         text: p != null ? p.price.toString() : '');
     _stockCtrl = TextEditingController(
         text: p != null ? p.stock.toString() : '');
-    _category = p?.category ?? AppConstants.categories.first;
+    _category = AppConstants.categories.contains(p?.category) 
+        ? p!.category 
+        : AppConstants.categories.first;
     _colors = List.from(p?.colors ?? []);
     _sizes = List.from(p?.sizes ?? []);
     _imageUrls = List.from(p?.images ?? []);
@@ -344,7 +346,7 @@ class _ProductFormState extends State<_ProductForm> {
                 initialValue: _category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: AppConstants.categories.map((c) {
-                  return DropdownMenuItem(value: c, child: Text(c));
+                  return DropdownMenuItem<String>(value: c, child: Text(c));
                 }).toList(),
                 onChanged: (v) => setState(() => _category = v ?? _category),
               ),

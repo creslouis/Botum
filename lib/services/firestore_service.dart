@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product_model.dart';
 import '../models/order_model.dart';
 import '../models/user_model.dart';
+import '../models/payment_method_model.dart';
 import '../core/constants/app_constants.dart';
 
 class FirestoreService {
@@ -13,6 +14,10 @@ class FirestoreService {
       _firestore.collection(AppConstants.collectionProducts);
   CollectionReference get _orders =>
       _firestore.collection(AppConstants.collectionOrders);
+  CollectionReference get _paymentMethods =>
+      _firestore.collection(AppConstants.collectionPaymentMethods);
+  CollectionReference get _appSettings =>
+      _firestore.collection(AppConstants.collectionAppSettings);
 
   // ─── Users ───────────────────────────────────────────────
 
@@ -43,6 +48,21 @@ class FirestoreService {
     });
   }
 
+  /// Get all users (admin only)
+  Stream<List<UserModel>> getAllUsers() {
+    return _users
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => UserModel.fromMap(doc.data() as Map<String, dynamic>))
+            .toList());
+  }
+
+  /// Update a user's role (admin only)
+  Future<void> updateUserRole(String uid, String role) async {
+    await _users.doc(uid).update({'role': role});
+  }
+
   // ─── Products ────────────────────────────────────────────
 
   Future<void> addProduct(ProductModel product) async {
@@ -67,26 +87,33 @@ class FirestoreService {
   Stream<List<ProductModel>> getProducts() {
     return _products
         .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(_productsListFromSnapshot);
+        .map((snapshot) {
+          final list = _productsListFromSnapshot(snapshot);
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   Future<List<ProductModel>> getProductsOnce() async {
     final snapshot = await _products
         .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
         .get();
-    return _productsListFromSnapshot(snapshot);
+    final list = _productsListFromSnapshot(snapshot);
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
   }
 
   Stream<List<ProductModel>> getProductsByCategory(String category) {
     return _products
         .where('category', isEqualTo: category)
         .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(_productsListFromSnapshot);
+        .map((snapshot) {
+          final list = _productsListFromSnapshot(snapshot);
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   Stream<List<ProductModel>> getAllProductsForAdmin() {
@@ -134,9 +161,12 @@ class FirestoreService {
   Stream<List<OrderModel>> getUserOrders(String userId) {
     return _orders
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(_ordersListFromSnapshot);
+        .map((snapshot) {
+          final list = _ordersListFromSnapshot(snapshot);
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   Stream<List<OrderModel>> getAllOrders() {
@@ -184,5 +214,80 @@ class FirestoreService {
         .map((snapshot) => snapshot.docs
             .map((doc) => doc.id)
             .toList());
+  }
+
+  // ─── Payment Methods ─────────────────────────────────────
+
+  /// Stream of active payment methods sorted by sortOrder (for checkout screen)
+  Stream<List<PaymentMethodModel>> getPaymentMethods() {
+    return _paymentMethods
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => PaymentMethodModel.fromMap(doc.data() as Map<String, dynamic>))
+              .toList();
+          list.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+          return list;
+        });
+  }
+
+  /// Stream of all payment methods including inactive (for admin panel)
+  Stream<List<PaymentMethodModel>> getAllPaymentMethods() {
+    return _paymentMethods
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => PaymentMethodModel.fromMap(doc.data() as Map<String, dynamic>))
+            .toList());
+  }
+
+  Future<void> addPaymentMethod(PaymentMethodModel method) async {
+    await _paymentMethods.doc(method.id).set(method.toMap());
+  }
+
+  Future<void> updatePaymentMethod(String id, Map<String, dynamic> data) async {
+    await _paymentMethods.doc(id).update({
+      ...data,
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<void> deletePaymentMethod(String id) async {
+    await _paymentMethods.doc(id).delete();
+  }
+
+  // ─── App Settings ─────────────────────────────────────────
+
+  Future<Map<String, dynamic>?> getAppSettings() async {
+    final doc = await _appSettings.doc('general').get();
+    if (!doc.exists) return null;
+    return doc.data() as Map<String, dynamic>?;
+  }
+
+  Future<void> updateAppSettings(Map<String, dynamic> data) async {
+    await _appSettings.doc('general').set(data, SetOptions(merge: true));
+  }
+
+  Stream<Map<String, dynamic>?> streamAppSettings() {
+    return _appSettings.doc('general').snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return doc.data() as Map<String, dynamic>?;
+    });
+  }
+
+  // ─── Dashboard Stats ──────────────────────────────────────
+
+  Future<Map<String, int>> getDashboardStats() async {
+    final results = await Future.wait([
+      _products.count().get(),
+      _orders.count().get(),
+      _users.count().get(),
+    ]);
+    return {
+      'products': results[0].count ?? 0,
+      'orders': results[1].count ?? 0,
+      'users': results[2].count ?? 0,
+    };
   }
 }

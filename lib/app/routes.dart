@@ -20,4 +20,6 @@ class AppRoutes {
   static const String adminOrders = '/admin/orders';
   static const String adminAddProduct = '/admin/add-product';
   static const String adminEditProduct = '/admin/edit-product';
+  static const String adminPaymentMethods = '/admin/payment-methods';
+  static const String adminSettings = '/admin/settings';
 }

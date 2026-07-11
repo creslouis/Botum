@@ -96,6 +96,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             _buildSizeInfo(product.sizes),
                             const SizedBox(height: 20),
                           ],
+                          if (product.features.isNotEmpty) ...[
+                            _buildFeatures(product.features),
+                            const SizedBox(height: 20),
+                          ],
                           _buildDescription(product.description),
                           const SizedBox(height: 24),
                         ],
@@ -395,6 +399,50 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             height: 1.5,
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildFeatures(List<String> features) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Features',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.black,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...features.map((feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '• ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                      height: 1.2,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.darkGrey,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
       ],
     );
   }

@@ -18,18 +18,12 @@ class PaymentOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.88),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFFE91E8C)
-                : const Color(0xFFEAD8E2),
-            width: isSelected ? 1.6 : 1,
-          ),
+          color: Colors.white.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
@@ -38,14 +32,31 @@ class PaymentOptionTile extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
               ),
             ),
-            Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected ? const Color(0xFFE91E8C) : Colors.black38,
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFFE91E8C)
+                      : const Color(0xFFD7B9C9),
+                ),
+              ),
+              child: isSelected
+                  ? const Center(
+                      child: CircleAvatar(
+                        radius: 5,
+                        backgroundColor: Color(0xFFE91E8C),
+                      ),
+                    )
+                  : null,
             ),
           ],
         ),

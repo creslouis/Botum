@@ -108,6 +108,24 @@ class AdminDashboard extends StatelessWidget {
                       Navigator.pushNamed(context, AppRoutes.adminOrders);
                     },
                   ),
+                  const SizedBox(height: 12),
+                  _AdminMenuItem(
+                    icon: Icons.payment,
+                    title: 'Payment Methods',
+                    subtitle: 'Manage checkout options',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.adminPaymentMethods);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _AdminMenuItem(
+                    icon: Icons.settings,
+                    title: 'App Settings',
+                    subtitle: 'Configure store information',
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.adminSettings);
+                    },
+                  ),
                 ],
               ),
             ),
