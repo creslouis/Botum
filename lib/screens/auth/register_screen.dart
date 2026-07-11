@@ -283,8 +283,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.black,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(color: Colors.white),
+          ),
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background_pattern.png',
+              fit: BoxFit.cover,
+              opacity: const AlwaysStoppedAnimation(0.80),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
@@ -308,11 +320,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Username field
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Username',
-                    prefixIcon: Icon(Icons.person_outlined, color: AppColors.grey),
+                    hintStyle: TextStyle(color: AppColors.grey),
+                    prefixIcon: const Icon(Icons.person_outlined, color: AppColors.grey),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
-                  style: const TextStyle(color: AppColors.white),
+                  style: const TextStyle(color: AppColors.primary),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your name';
@@ -325,11 +344,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined, color: AppColors.grey),
+                    hintStyle: TextStyle(color: AppColors.grey),
+                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.grey),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
-                  style: const TextStyle(color: AppColors.white),
+                  style: const TextStyle(color: AppColors.primary),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
@@ -345,11 +371,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Phone number',
-                    prefixIcon: Icon(Icons.phone_outlined, color: AppColors.grey),
+                    hintStyle: TextStyle(color: AppColors.grey),
+                    prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.grey),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
-                  style: const TextStyle(color: AppColors.white),
+                  style: const TextStyle(color: AppColors.primary),
                 ),
                 const SizedBox(height: 16),
                 // Password field
@@ -358,7 +391,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     hintText: 'Password',
+                    hintStyle: TextStyle(color: AppColors.grey),
                     prefixIcon: const Icon(Icons.lock_outlined, color: AppColors.grey),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -371,7 +411,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                   ),
-                  style: const TextStyle(color: AppColors.white),
+                  style: const TextStyle(color: AppColors.primary),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a password';
@@ -389,7 +429,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _obscureConfirm,
                   decoration: InputDecoration(
                     hintText: 'Confirm password',
+                    hintStyle: TextStyle(color: AppColors.grey),
                     prefixIcon: const Icon(Icons.lock_outlined, color: AppColors.grey),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirm
@@ -402,7 +449,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                   ),
-                  style: const TextStyle(color: AppColors.white),
+                  style: const TextStyle(color: AppColors.primary),
                   validator: (value) {
                     if (value != _passwordController.text) {
                       return 'Passwords do not match';
@@ -503,7 +550,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
       ),
-    );
+      ],
+    ),
+  );
   }
 }
 

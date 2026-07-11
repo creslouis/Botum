@@ -16,21 +16,17 @@ class WelcomeScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.black,
-                    AppColors.black.withOpacity(0.95),
-                  ],
-                ),
-              ),
+            child: Container(color: Colors.white),
+          ),
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background_pattern.png',
+              fit: BoxFit.cover,
+              opacity: const AlwaysStoppedAnimation(0.80),
             ),
           ),
           Positioned(
