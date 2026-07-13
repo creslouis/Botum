@@ -11,6 +11,7 @@ import '../../providers/cart_provider.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/category_chip.dart';
 import '../../app/routes.dart';
+import '../../services/firestore_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -163,78 +164,105 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBanner(BuildContext context) {
-    return Container(
-      height: 150,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: AppColors.pinkGradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 20, 0, 20),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'BEST SOUVENIRS,\nONE TAP AWAY!',
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.white,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AppRoutes.products),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.white,
-                    foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Explore',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: FirestoreService().streamBannerSettings(),
+      builder: (context, snapshot) {
+        final data = snapshot.data;
+        final enabled = data?['enabled'] ?? true;
+        if (!enabled) return const SizedBox.shrink();
+        
+        final title = data?['title'] ?? 'BEST SOUVENIRS,\nONE TAP AWAY!';
+        final buttonText = data?['buttonText'] ?? 'Explore';
+        final imageUrl = data?['imageUrl'] as String?;
+
+        return Container(
+          height: 150,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: AppColors.pinkGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(16),
           ),
-          Expanded(
-            flex: 2,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: AppColors.white.withValues(alpha: 0.15),
-              ),
-              margin: const EdgeInsets.only(right: 16),
-              child: const Center(
-                child: Icon(
-                  Icons.card_giftcard,
-                  size: 64,
-                  color: AppColors.white,
+          padding: const EdgeInsets.fromLTRB(24, 20, 0, 20),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title.replaceAll('\\n', '\n'),
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.white,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () =>
+                          Navigator.pushNamed(context, AppRoutes.products),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.white,
+                        foregroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        buttonText,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+              Expanded(
+                flex: 2,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.white.withValues(alpha: 0.15),
+                  ),
+                  margin: const EdgeInsets.only(right: 16),
+                  child: imageUrl != null && imageUrl.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => const Center(
+                              child: Icon(Icons.card_giftcard, size: 64, color: AppColors.white),
+                            ),
+                            errorWidget: (_, __, ___) => const Center(
+                              child: Icon(Icons.card_giftcard, size: 64, color: AppColors.white),
+                            ),
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(
+                            Icons.card_giftcard,
+                            size: 64,
+                            color: AppColors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

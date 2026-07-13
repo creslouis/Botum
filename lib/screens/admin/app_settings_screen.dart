@@ -21,6 +21,12 @@ class _AdminAppSettingsScreenState extends State<AdminAppSettingsScreen> {
   final _addressCtrl = TextEditingController();
   bool _maintenanceMode = false;
 
+  // Banner settings
+  final _bannerTitleCtrl = TextEditingController(text: 'BEST SOUVENIRS,\nONE TAP AWAY!');
+  final _bannerButtonTextCtrl = TextEditingController(text: 'Explore');
+  final _bannerImageUrlCtrl = TextEditingController();
+  bool _bannerEnabled = true;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +41,15 @@ class _AdminAppSettingsScreenState extends State<AdminAppSettingsScreen> {
         _contactPhoneCtrl.text = data['contactPhone'] ?? '';
         _addressCtrl.text = data['address'] ?? '';
         _maintenanceMode = data['maintenanceMode'] ?? false;
+      });
+    }
+    final bannerData = await _firestore.getBannerSettings();
+    if (bannerData != null && mounted) {
+      setState(() {
+        _bannerTitleCtrl.text = bannerData['title'] ?? 'BEST SOUVENIRS,\nONE TAP AWAY!';
+        _bannerButtonTextCtrl.text = bannerData['buttonText'] ?? 'Explore';
+        _bannerImageUrlCtrl.text = bannerData['imageUrl'] ?? '';
+        _bannerEnabled = bannerData['enabled'] ?? true;
       });
     }
     if (mounted) {
@@ -57,6 +72,14 @@ class _AdminAppSettingsScreenState extends State<AdminAppSettingsScreen> {
       'updatedAt': DateTime.now().toIso8601String(),
     });
 
+    await _firestore.updateBannerSettings({
+      'title': _bannerTitleCtrl.text.trim(),
+      'buttonText': _bannerButtonTextCtrl.text.trim(),
+      'imageUrl': _bannerImageUrlCtrl.text.trim(),
+      'enabled': _bannerEnabled,
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+
     if (mounted) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -70,6 +93,9 @@ class _AdminAppSettingsScreenState extends State<AdminAppSettingsScreen> {
     _contactEmailCtrl.dispose();
     _contactPhoneCtrl.dispose();
     _addressCtrl.dispose();
+    _bannerTitleCtrl.dispose();
+    _bannerButtonTextCtrl.dispose();
+    _bannerImageUrlCtrl.dispose();
     super.dispose();
   }
 
@@ -135,6 +161,44 @@ class _AdminAppSettingsScreenState extends State<AdminAppSettingsScreen> {
                     onChanged: (v) => setState(() => _maintenanceMode = v),
                   ),
                   
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('Home Banner'),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text('Show Banner'),
+                    value: _bannerEnabled,
+                    onChanged: (v) => setState(() => _bannerEnabled = v),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _bannerTitleCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Banner Title',
+                      prefixIcon: Icon(Icons.title),
+                      hintText: 'BEST SOUVENIRS,\\nONE TAP AWAY!',
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _bannerButtonTextCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Button Text',
+                      prefixIcon: Icon(Icons.smart_button),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _bannerImageUrlCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Banner Image URL (optional)',
+                      prefixIcon: Icon(Icons.image),
+                      hintText: 'https://example.com/banner.png',
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
                   const SizedBox(height: 48),
                   ElevatedButton(
                     onPressed: _saveSettings,

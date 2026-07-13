@@ -25,15 +25,30 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'Lim Navy');
-  final _streetController = TextEditingController(
-    text: '271 Chip Mong, Mean Chey',
-  );
-  final _cityController = TextEditingController(text: 'Phnom Penh');
-  final _phoneController = TextEditingController(text: '+855 98 987 987');
-  final _cardNameController = TextEditingController(text: 'Lim Navy');
+  final _nameController = TextEditingController();
+  final _streetController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _cardNameController = TextEditingController();
   String _selectedPaymentName = 'Mastercard';
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      if (auth.isAuthenticated && !auth.isGuest && auth.userModel != null) {
+        final user = auth.userModel!;
+        if (_nameController.text.isEmpty && user.displayName.isNotEmpty) {
+          _nameController.text = user.displayName;
+        }
+        if (_cardNameController.text.isEmpty && user.displayName.isNotEmpty) {
+          _cardNameController.text = user.displayName;
+        }
+      }
+    });
+  }
 
   final FirestoreService _firestoreService = FirestoreService();
 

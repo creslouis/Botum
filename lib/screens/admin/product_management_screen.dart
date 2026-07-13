@@ -8,6 +8,7 @@ import '../../core/constants/app_constants.dart';
 import '../../models/product_model.dart';
 import '../../services/firestore_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/product_provider.dart';
 
 class AdminProductManagementScreen extends StatefulWidget {
   final String? editProductId;
@@ -38,6 +39,11 @@ class _AdminProductManagementScreenState
       appBar: AppBar(
         title: const Text('Product Management'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.cloud_upload_outlined),
+            tooltip: 'Seed mock products to Firestore',
+            onPressed: () => _seedProducts(),
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _showProductDialog(),
@@ -133,6 +139,47 @@ class _AdminProductManagementScreenState
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _seedProducts() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Seed Products'),
+        content: const Text(
+          'This will upload all built-in mock products to Firestore. '
+          'Existing products will NOT be overwritten. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Seed Now'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Seeding products...')),
+    );
+
+    final provider = ProductProvider();
+    // Access mock products by calling fetchProducts first
+    await provider.fetchProducts();
+    final mockProducts = provider.allProducts;
+
+    final count = await _firestore.seedProducts(mockProducts);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$count new products seeded to Firestore!')),
     );
   }
 }

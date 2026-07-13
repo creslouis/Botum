@@ -78,6 +78,41 @@ class FirestoreService {
     await _products.doc(productId).delete();
   }
 
+  /// Seed mock products into Firestore (admin only)
+  Future<int> seedProducts(List<ProductModel> products) async {
+    final batch = _firestore.batch();
+    int count = 0;
+    for (final product in products) {
+      final docRef = _products.doc(product.id);
+      final existing = await docRef.get();
+      if (!existing.exists) {
+        batch.set(docRef, product.toMap());
+        count++;
+      }
+    }
+    await batch.commit();
+    return count;
+  }
+
+  /// Save or update banner settings
+  Future<void> updateBannerSettings(Map<String, dynamic> data) async {
+    await _appSettings.doc('banner').set(data, SetOptions(merge: true));
+  }
+
+  /// Get banner settings
+  Future<Map<String, dynamic>?> getBannerSettings() async {
+    final doc = await _appSettings.doc('banner').get();
+    if (!doc.exists) return null;
+    return doc.data() as Map<String, dynamic>?;
+  }
+
+  Stream<Map<String, dynamic>?> streamBannerSettings() {
+    return _appSettings.doc('banner').snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return doc.data() as Map<String, dynamic>?;
+    });
+  }
+
   Future<ProductModel?> getProductById(String productId) async {
     final doc = await _products.doc(productId).get();
     if (!doc.exists) return null;
@@ -118,9 +153,12 @@ class FirestoreService {
 
   Stream<List<ProductModel>> getAllProductsForAdmin() {
     return _products
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(_productsListFromSnapshot);
+        .map((snapshot) {
+          final list = _productsListFromSnapshot(snapshot);
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   Future<List<ProductModel>> searchProducts(String query) async {
@@ -171,9 +209,12 @@ class FirestoreService {
 
   Stream<List<OrderModel>> getAllOrders() {
     return _orders
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(_ordersListFromSnapshot);
+        .map((snapshot) {
+          final list = _ordersListFromSnapshot(snapshot);
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   List<OrderModel> _ordersListFromSnapshot(QuerySnapshot snapshot) {
@@ -235,11 +276,14 @@ class FirestoreService {
   /// Stream of all payment methods including inactive (for admin panel)
   Stream<List<PaymentMethodModel>> getAllPaymentMethods() {
     return _paymentMethods
-        .orderBy('sortOrder')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => PaymentMethodModel.fromMap(doc.data() as Map<String, dynamic>))
-            .toList());
+        .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => PaymentMethodModel.fromMap(doc.data() as Map<String, dynamic>))
+              .toList();
+          list.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+          return list;
+        });
   }
 
   Future<void> addPaymentMethod(PaymentMethodModel method) async {
