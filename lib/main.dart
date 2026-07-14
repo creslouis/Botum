@@ -12,6 +12,9 @@ import 'providers/cart_provider.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/product_provider.dart';
 
+const _googleServerClientId =
+    '1060182984054-o783s6fvoa4h8flf0eqi62rfp98ocleb.apps.googleusercontent.com';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Firebase.apps.isEmpty) {
@@ -21,7 +24,9 @@ void main() async {
   }
 
   try {
-    await GoogleSignIn.instance.initialize();
+    await GoogleSignIn.instance.initialize(
+      serverClientId: kIsWeb ? null : _googleServerClientId,
+    );
   } catch (error, stackTrace) {
     FlutterError.reportError(
       FlutterErrorDetails(
@@ -46,9 +51,7 @@ void main() async {
         ChangeNotifierProvider(
           create: (context) {
             final provider = FavoritesProvider();
-            provider.initAuthListener(
-              FirebaseAuth.instance.authStateChanges(),
-            );
+            provider.initAuthListener(FirebaseAuth.instance.authStateChanges());
             return provider;
           },
         ),

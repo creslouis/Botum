@@ -145,9 +145,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSearchBar(BuildContext context) {
+    final productProvider = context.read<ProductProvider>();
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, AppRoutes.products).then((_) {
-        if (mounted) context.read<ProductProvider>().resetFilters();
+        if (mounted) productProvider.resetFilters();
       }),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -170,6 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBanner(BuildContext context) {
+    final productProvider = context.read<ProductProvider>();
     return StreamBuilder<Map<String, dynamic>?>(
       stream: FirestoreService().streamBannerSettings(),
       builder: (context, snapshot) {
@@ -212,9 +214,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () =>
-                          Navigator.pushNamed(context, AppRoutes.products).then((_) {
-                        if (mounted) context.read<ProductProvider>().resetFilters();
-                      }),
+                          Navigator.pushNamed(context, AppRoutes.products).then(
+                            (_) {
+                              if (mounted) productProvider.resetFilters();
+                            },
+                          ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.white,
                         foregroundColor: AppColors.primary,
@@ -297,9 +301,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         TextButton(
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.products).then((_) {
-            if (mounted) context.read<ProductProvider>().resetFilters();
-          }),
+          onPressed: () =>
+              Navigator.pushNamed(context, AppRoutes.products).then((_) {
+                if (mounted) context.read<ProductProvider>().resetFilters();
+              }),
           child: const Text(
             'See All',
             style: TextStyle(
@@ -314,6 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoryChips(BuildContext context, ProductProvider provider) {
+    final productProvider = context.read<ProductProvider>();
     final categories = ['All', ...AppConstants.categories];
     final icons = ['✨', ...AppConstants.categoryIcons];
 
@@ -334,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 provider.setCategory(category);
                 Navigator.pushNamed(context, AppRoutes.products).then((_) {
-                  if (mounted) context.read<ProductProvider>().resetFilters();
+                  if (mounted) productProvider.resetFilters();
                 });
               },
             ),
@@ -393,6 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBottomNav(BuildContext context) {
+    final productProvider = context.read<ProductProvider>();
     return BottomNavigationBar(
       currentIndex: _currentNavIndex,
       onTap: (index) {
@@ -405,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
           case 1:
             Navigator.pushNamed(context, AppRoutes.products).then((_) {
               if (mounted) {
-                context.read<ProductProvider>().resetFilters();
+                productProvider.resetFilters();
                 setState(() => _currentNavIndex = 0);
               }
             });

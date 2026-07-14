@@ -426,6 +426,9 @@ class AuthProvider extends ChangeNotifier {
           return 'Sign in was cancelled.';
         case 'sign-in-timeout':
           return error.message ?? 'Google sign in timed out. Please try again.';
+        case 'missing-google-id-token':
+          return error.message ??
+              'Google sign in did not return an ID token. Check Firebase Google sign-in configuration.';
         case 'provider-already-linked':
           return 'This provider is already connected to your account.';
         case 'credential-already-in-use':

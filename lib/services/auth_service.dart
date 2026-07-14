@@ -99,6 +99,13 @@ class AuthService {
       const Duration(seconds: 45),
     );
     final googleAuth = googleUser.authentication;
+    if (googleAuth.idToken == null || googleAuth.idToken!.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'missing-google-id-token',
+        message:
+            'Google sign in did not return an ID token. Check the Android OAuth client and server client ID configuration.',
+      );
+    }
     final credential = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,
     );
@@ -309,6 +316,13 @@ class AuthService {
       const Duration(seconds: 45),
     );
     final googleAuth = googleUser.authentication;
+    if (googleAuth.idToken == null || googleAuth.idToken!.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'missing-google-id-token',
+        message:
+            'Google sign in did not return an ID token. Check the Android OAuth client and server client ID configuration.',
+      );
+    }
     return GoogleAuthProvider.credential(idToken: googleAuth.idToken);
   }
 
