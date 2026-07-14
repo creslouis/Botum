@@ -95,13 +95,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined,
-                    size: 14, color: AppColors.grey),
-                const SizedBox(width: 4),
-                Text(
-                  'Phnom Penh, KH',
-                  style: AppTextStyles.caption,
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: AppColors.grey,
                 ),
+                const SizedBox(width: 4),
+                Text('Phnom Penh, KH', style: AppTextStyles.caption),
               ],
             ),
           ],
@@ -110,8 +110,10 @@ class _HomeScreenState extends State<HomeScreen> {
         Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.shopping_cart_outlined,
-                  color: AppColors.black),
+              icon: const Icon(
+                Icons.shopping_cart_outlined,
+                color: AppColors.black,
+              ),
               onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
             ),
             if (cartQty > 0)
@@ -170,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final data = snapshot.data;
         final enabled = data?['enabled'] ?? true;
         if (!enabled) return const SizedBox.shrink();
-        
+
         final title = data?['title'] ?? 'BEST SOUVENIRS,\nONE TAP AWAY!';
         final buttonText = data?['buttonText'] ?? 'Explore';
         final imageUrl = data?['imageUrl'] as String?;
@@ -211,7 +213,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         backgroundColor: AppColors.white,
                         foregroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 10),
+                          horizontal: 24,
+                          vertical: 10,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
                         ),
@@ -242,11 +246,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: CachedNetworkImage(
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) => const Center(
-                              child: Icon(Icons.card_giftcard, size: 64, color: AppColors.white),
+                            placeholder: (context, url) => const Center(
+                              child: Icon(
+                                Icons.card_giftcard,
+                                size: 64,
+                                color: AppColors.white,
+                              ),
                             ),
-                            errorWidget: (_, __, ___) => const Center(
-                              child: Icon(Icons.card_giftcard, size: 64, color: AppColors.white),
+                            errorWidget: (context, url, error) => const Center(
+                              child: Icon(
+                                Icons.card_giftcard,
+                                size: 64,
+                                color: AppColors.white,
+                              ),
                             ),
                           ),
                         )
@@ -333,7 +345,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (provider.isLoading) {
       return const SizedBox(
         height: 260,
-        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 

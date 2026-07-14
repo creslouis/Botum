@@ -13,10 +13,12 @@ class AdminOrderManagementScreen extends StatefulWidget {
   const AdminOrderManagementScreen({super.key});
 
   @override
-  State<AdminOrderManagementScreen> createState() => _AdminOrderManagementScreenState();
+  State<AdminOrderManagementScreen> createState() =>
+      _AdminOrderManagementScreenState();
 }
 
-class _AdminOrderManagementScreenState extends State<AdminOrderManagementScreen> {
+class _AdminOrderManagementScreenState
+    extends State<AdminOrderManagementScreen> {
   String _filterStatus = 'all';
 
   @override
@@ -32,7 +34,10 @@ class _AdminOrderManagementScreenState extends State<AdminOrderManagementScreen>
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Orders', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Orders',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -51,7 +56,11 @@ class _AdminOrderManagementScreenState extends State<AdminOrderManagementScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.receipt_long, size: 64, color: AppColors.grey),
+                  const Icon(
+                    Icons.receipt_long,
+                    size: 64,
+                    color: AppColors.grey,
+                  ),
                   const SizedBox(height: 16),
                   Text('No orders yet', style: AppTextStyles.headingSmall),
                 ],
@@ -60,9 +69,16 @@ class _AdminOrderManagementScreenState extends State<AdminOrderManagementScreen>
           }
 
           // Calculate stats
-          final totalRevenue = allOrders.fold<double>(0, (sum, o) => sum + o.totalPrice);
-          final pendingCount = allOrders.where((o) => o.status == 'pending').length;
-          final deliveredCount = allOrders.where((o) => o.status == 'delivered').length;
+          final totalRevenue = allOrders.fold<double>(
+            0,
+            (sum, o) => sum + o.totalPrice,
+          );
+          final pendingCount = allOrders
+              .where((o) => o.status == 'pending')
+              .length;
+          final deliveredCount = allOrders
+              .where((o) => o.status == 'delivered')
+              .length;
 
           // Filter
           final orders = _filterStatus == 'all'
@@ -120,30 +136,46 @@ class _AdminOrderManagementScreenState extends State<AdminOrderManagementScreen>
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: ['all', 'pending', 'confirmed', 'shipped', 'delivered'].map((status) {
-                    final isActive = _filterStatus == status;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        selected: isActive,
-                        label: Text(
-                          status == 'all' ? 'All (${allOrders.length})' : '${status[0].toUpperCase()}${status.substring(1)}',
-                          style: TextStyle(
-                            color: isActive ? Colors.white : AppColors.black,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                  children:
+                      [
+                        'all',
+                        'pending',
+                        'confirmed',
+                        'shipped',
+                        'delivered',
+                      ].map((status) {
+                        final isActive = _filterStatus == status;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            selected: isActive,
+                            label: Text(
+                              status == 'all'
+                                  ? 'All (${allOrders.length})'
+                                  : '${status[0].toUpperCase()}${status.substring(1)}',
+                              style: TextStyle(
+                                color: isActive
+                                    ? Colors.white
+                                    : AppColors.black,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            selectedColor: AppColors.primary,
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: isActive
+                                    ? AppColors.primary
+                                    : const Color(0xFFE0E0E0),
+                              ),
+                            ),
+                            onSelected: (_) =>
+                                setState(() => _filterStatus = status),
                           ),
-                        ),
-                        selectedColor: AppColors.primary,
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(color: isActive ? AppColors.primary : const Color(0xFFE0E0E0)),
-                        ),
-                        onSelected: (_) => setState(() => _filterStatus = status),
-                      ),
-                    );
-                  }).toList(),
+                        );
+                      }).toList(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -153,14 +185,17 @@ class _AdminOrderManagementScreenState extends State<AdminOrderManagementScreen>
                 child: orders.isEmpty
                     ? Center(
                         child: Text(
-                          'No ${_filterStatus} orders',
-                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.grey),
+                          'No $_filterStatus orders',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.grey,
+                          ),
                         ),
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: orders.length,
-                        itemBuilder: (context, index) => _OrderCard(order: orders[index]),
+                        itemBuilder: (context, index) =>
+                            _OrderCard(order: orders[index]),
                       ),
               ),
             ],
@@ -176,7 +211,11 @@ class _MiniStat extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _MiniStat({required this.label, required this.value, required this.icon});
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -185,8 +224,21 @@ class _MiniStat extends StatelessWidget {
       children: [
         Icon(icon, color: Colors.white70, size: 20),
         const SizedBox(height: 6),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
-        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 11,
+          ),
+        ),
       ],
     );
   }
@@ -206,7 +258,11 @@ class _OrderCard extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
-          BoxShadow(color: Color(0x08000000), blurRadius: 8, offset: Offset(0, 3)),
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
         ],
       ),
       child: Theme(
@@ -215,7 +271,8 @@ class _OrderCard extends StatelessWidget {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           leading: Container(
-            width: 44, height: 44,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: _statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
@@ -223,7 +280,11 @@ class _OrderCard extends StatelessWidget {
             child: Center(
               child: Text(
                 order.itemCount.toString(),
-                style: TextStyle(color: _statusColor, fontWeight: FontWeight.w800, fontSize: 16),
+                style: TextStyle(
+                  color: _statusColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
@@ -232,17 +293,30 @@ class _OrderCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   Helpers.shortenOrderId(order.orderId),
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
               ),
               if (isGuest)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF3E0),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('Guest', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFFE65100))),
+                  child: const Text(
+                    'Guest',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFE65100),
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -255,7 +329,11 @@ class _OrderCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 '\$${order.totalPrice.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
               ),
             ],
           ),
@@ -267,46 +345,93 @@ class _OrderCard extends StatelessWidget {
             ),
             child: Text(
               order.status.toUpperCase(),
-              style: TextStyle(color: _statusColor, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+              style: TextStyle(
+                color: _statusColor,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
           children: [
             const Divider(height: 1),
             const SizedBox(height: 12),
-            _infoRow(Icons.person_outline, 'Customer', order.shippingInfo.fullName),
+            _infoRow(
+              Icons.person_outline,
+              'Customer',
+              order.shippingInfo.fullName,
+            ),
             _infoRow(Icons.phone_outlined, 'Phone', order.shippingInfo.phone),
-            _infoRow(Icons.location_on_outlined, 'Address', '${order.shippingInfo.street}, ${order.shippingInfo.city}'),
+            _infoRow(
+              Icons.location_on_outlined,
+              'Address',
+              '${order.shippingInfo.street}, ${order.shippingInfo.city}',
+            ),
             _infoRow(Icons.payment_outlined, 'Payment', order.paymentMethod),
             const SizedBox(height: 12),
-            const Text('Items', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            const Text(
+              'Items',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
             const SizedBox(height: 8),
-            ...order.items.map((item) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(
-                      width: 36, height: 36,
-                      child: item.productImage.startsWith('http')
-                          ? CachedNetworkImage(imageUrl: item.productImage, fit: BoxFit.cover)
-                          : item.productImage.startsWith('assets/')
-                              ? Image.asset(item.productImage, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 18))
-                              : const Icon(Icons.image, size: 18),
+            ...order.items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: item.productImage.startsWith('http')
+                            ? CachedNetworkImage(
+                                imageUrl: item.productImage,
+                                fit: BoxFit.cover,
+                              )
+                            : item.productImage.startsWith('assets/')
+                            ? Image.asset(
+                                item.productImage,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.image, size: 18),
+                              )
+                            : const Icon(Icons.image, size: 18),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(item.productName, style: const TextStyle(fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ),
-                  Text('x${item.quantity}', style: const TextStyle(fontSize: 12, color: AppColors.grey)),
-                  const SizedBox(width: 8),
-                  Text('\$${item.totalPrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                ],
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        item.productName,
+                        style: const TextStyle(fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      'x${item.quantity}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.grey,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '\$${item.totalPrice.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            )),
+            ),
             const SizedBox(height: 16),
-            const Text('Update Status', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            const Text(
+              'Update Status',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -318,19 +443,29 @@ class _OrderCard extends StatelessWidget {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () async {
-                      await FirestoreService().updateOrderStatus(order.orderId, status);
+                      await FirestoreService().updateOrderStatus(
+                        order.orderId,
+                        status,
+                      );
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: isActive ? _getStatusColor(status) : Colors.transparent,
+                        color: isActive
+                            ? _getStatusColor(status)
+                            : Colors.transparent,
                         border: Border.all(color: _getStatusColor(status)),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         status[0].toUpperCase() + status.substring(1),
                         style: TextStyle(
-                          color: isActive ? Colors.white : _getStatusColor(status),
+                          color: isActive
+                              ? Colors.white
+                              : _getStatusColor(status),
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -353,8 +488,22 @@ class _OrderCard extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: AppColors.grey),
           const SizedBox(width: 8),
-          Text('$label: ', style: const TextStyle(fontSize: 12, color: AppColors.grey, fontWeight: FontWeight.w600)),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.grey,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
@@ -364,11 +513,16 @@ class _OrderCard extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return const Color(0xFFF57C00);
-      case 'confirmed': return const Color(0xFF1976D2);
-      case 'shipped': return const Color(0xFFE91E8C);
-      case 'delivered': return const Color(0xFF388E3C);
-      default: return AppColors.grey;
+      case 'pending':
+        return const Color(0xFFF57C00);
+      case 'confirmed':
+        return const Color(0xFF1976D2);
+      case 'shipped':
+        return const Color(0xFFE91E8C);
+      case 'delivered':
+        return const Color(0xFF388E3C);
+      default:
+        return AppColors.grey;
     }
   }
 }

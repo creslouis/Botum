@@ -17,16 +17,17 @@ class AdminDashboard extends StatelessWidget {
       return Scaffold(
         backgroundColor: AppColors.white,
         appBar: AppBar(title: const Text('Access Denied')),
-        body: const Center(
-          child: Text('You do not have admin access.'),
-        ),
+        body: const Center(child: Text('You do not have admin access.')),
       );
     }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Admin Dashboard', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Admin Dashboard',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -92,17 +93,26 @@ class AdminDashboard extends StatelessWidget {
                       _StatCard(
                         icon: Icons.inventory_2_outlined,
                         label: 'Products',
-                        stream: FirebaseFirestore.instance.collection('products').snapshots().map((s) => s.docs.length.toString()),
+                        stream: FirebaseFirestore.instance
+                            .collection('products')
+                            .snapshots()
+                            .map((s) => s.docs.length.toString()),
                       ),
                       _StatCard(
                         icon: Icons.shopping_bag_outlined,
                         label: 'Orders',
-                        stream: FirebaseFirestore.instance.collection('orders').snapshots().map((s) => s.docs.length.toString()),
+                        stream: FirebaseFirestore.instance
+                            .collection('orders')
+                            .snapshots()
+                            .map((s) => s.docs.length.toString()),
                       ),
                       _StatCard(
                         icon: Icons.people_outline,
                         label: 'Users',
-                        stream: FirebaseFirestore.instance.collection('users').snapshots().map((s) => s.docs.length.toString()),
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .snapshots()
+                            .map((s) => s.docs.length.toString()),
                       ),
                     ],
                   ),
@@ -118,14 +128,15 @@ class AdminDashboard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             _AdminMenuItem(
               icon: Icons.inventory_2_outlined,
               title: 'Products',
               subtitle: 'Add, edit, or remove inventory',
               iconColor: const Color(0xFF4A148C),
               backgroundColor: const Color(0xFFF3E5F5),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.adminProducts),
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.adminProducts),
             ),
             _AdminMenuItem(
               icon: Icons.receipt_long_outlined,
@@ -136,12 +147,21 @@ class AdminDashboard extends StatelessWidget {
               onTap: () => Navigator.pushNamed(context, AppRoutes.adminOrders),
             ),
             _AdminMenuItem(
+              icon: Icons.people_alt_outlined,
+              title: 'Users',
+              subtitle: 'Promote teammates or remove admin access',
+              iconColor: const Color(0xFFAD1457),
+              backgroundColor: const Color(0xFFFCE4EC),
+              onTap: () => Navigator.pushNamed(context, AppRoutes.adminUsers),
+            ),
+            _AdminMenuItem(
               icon: Icons.payment_outlined,
               title: 'Payment Methods',
               subtitle: 'Configure checkout options & icons',
               iconColor: const Color(0xFFE65100),
               backgroundColor: const Color(0xFFFFF3E0),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.adminPaymentMethods),
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.adminPaymentMethods),
             ),
             _AdminMenuItem(
               icon: Icons.settings_outlined,
@@ -149,7 +169,8 @@ class AdminDashboard extends StatelessWidget {
               subtitle: 'Store info & maintenance mode',
               iconColor: const Color(0xFF37474F),
               backgroundColor: const Color(0xFFECEFF1),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.adminSettings),
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRoutes.adminSettings),
             ),
             const SizedBox(height: 24),
           ],
@@ -283,10 +304,7 @@ class _AdminMenuItem extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.grey,
-                ),
+                const Icon(Icons.chevron_right, color: AppColors.grey),
               ],
             ),
           ),

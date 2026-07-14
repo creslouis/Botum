@@ -18,6 +18,7 @@ class AppRoutes {
   static const String adminDashboard = '/admin';
   static const String adminProducts = '/admin/products';
   static const String adminOrders = '/admin/orders';
+  static const String adminUsers = '/admin/users';
   static const String adminAddProduct = '/admin/add-product';
   static const String adminEditProduct = '/admin/edit-product';
   static const String adminPaymentMethods = '/admin/payment-methods';

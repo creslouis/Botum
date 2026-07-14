@@ -17,6 +17,7 @@ import '../screens/admin/product_management_screen.dart';
 import '../screens/admin/order_management_screen.dart';
 import '../screens/admin/payment_management_screen.dart';
 import '../screens/admin/app_settings_screen.dart';
+import '../screens/admin/user_management_screen.dart';
 import 'routes.dart';
 
 class BotumApp extends StatelessWidget {
@@ -32,9 +33,7 @@ class BotumApp extends StatelessWidget {
       builder: (context, child) {
         return Stack(
           children: [
-            Positioned.fill(
-              child: Container(color: Colors.white),
-            ),
+            Positioned.fill(child: Container(color: Colors.white)),
             Positioned.fill(
               child: Image.asset(
                 'assets/images/background_pattern.png',
@@ -49,59 +48,39 @@ class BotumApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case AppRoutes.welcome:
-            return MaterialPageRoute(
-              builder: (_) => const WelcomeScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const WelcomeScreen());
           case AppRoutes.login:
-            return MaterialPageRoute(
-              builder: (_) => const LoginScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const LoginScreen());
           case AppRoutes.register:
-            return MaterialPageRoute(
-              builder: (_) => const RegisterScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const RegisterScreen());
           case AppRoutes.home:
-            return MaterialPageRoute(
-              builder: (_) => const HomeScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const HomeScreen());
           case AppRoutes.products:
-            return MaterialPageRoute(
-              builder: (_) => const ProductListScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const ProductListScreen());
           case AppRoutes.productDetail:
             final productId = settings.arguments as String?;
             return MaterialPageRoute(
               builder: (_) => ProductDetailScreen(productId: productId ?? ''),
             );
           case AppRoutes.cart:
-            return MaterialPageRoute(
-              builder: (_) => const CartScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const CartScreen());
           case AppRoutes.checkout:
-            return MaterialPageRoute(
-              builder: (_) => const CheckoutScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const CheckoutScreen());
           case AppRoutes.orderSuccess:
             final orderId = settings.arguments as String?;
             return MaterialPageRoute(
               builder: (_) => OrderSuccessScreen(orderId: orderId ?? ''),
             );
           case AppRoutes.favorites:
-            return MaterialPageRoute(
-              builder: (_) => const FavoritesScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const FavoritesScreen());
           case AppRoutes.profile:
-            return MaterialPageRoute(
-              builder: (_) => const ProfileScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const ProfileScreen());
           case AppRoutes.orderHistory:
             return MaterialPageRoute(
               builder: (_) => const OrderHistoryScreen(),
             );
           case AppRoutes.adminDashboard:
-            return MaterialPageRoute(
-              builder: (_) => const AdminDashboard(),
-            );
+            return MaterialPageRoute(builder: (_) => const AdminDashboard());
           case AppRoutes.adminProducts:
             return MaterialPageRoute(
               builder: (_) => const AdminProductManagementScreen(),
@@ -110,6 +89,10 @@ class BotumApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const AdminOrderManagementScreen(),
             );
+          case AppRoutes.adminUsers:
+            return MaterialPageRoute(
+              builder: (_) => const AdminUserManagementScreen(),
+            );
           case AppRoutes.adminAddProduct:
             return MaterialPageRoute(
               builder: (_) => const AdminProductManagementScreen(),
@@ -117,9 +100,8 @@ class BotumApp extends StatelessWidget {
           case AppRoutes.adminEditProduct:
             final productId = settings.arguments as String?;
             return MaterialPageRoute(
-              builder: (_) => AdminProductManagementScreen(
-                editProductId: productId,
-              ),
+              builder: (_) =>
+                  AdminProductManagementScreen(editProductId: productId),
             );
           case AppRoutes.adminPaymentMethods:
             return MaterialPageRoute(
@@ -130,9 +112,7 @@ class BotumApp extends StatelessWidget {
               builder: (_) => const AdminAppSettingsScreen(),
             );
           default:
-            return MaterialPageRoute(
-              builder: (_) => const WelcomeScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const WelcomeScreen());
         }
       },
     );
