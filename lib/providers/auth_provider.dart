@@ -58,9 +58,9 @@ class AuthProvider extends ChangeNotifier {
 
     AuthProviderConnection build(String providerId, String label) {
       final match = providers.cast<UserInfo?>().firstWhere(
-            (provider) => provider?.providerId == providerId,
-            orElse: () => null,
-          );
+        (provider) => provider?.providerId == providerId,
+        orElse: () => null,
+      );
 
       return AuthProviderConnection(
         providerId: providerId,
@@ -87,9 +87,11 @@ class AuthProvider extends ChangeNotifier {
 
   List<AuthProviderConnection> get photoSources {
     return socialConnections
-        .where((connection) =>
-            connection.isConnected &&
-            (connection.photoUrl?.isNotEmpty ?? false))
+        .where(
+          (connection) =>
+              connection.isConnected &&
+              (connection.photoUrl?.isNotEmpty ?? false),
+        )
         .toList();
   }
 
@@ -131,7 +133,9 @@ class AuthProvider extends ChangeNotifier {
     }
 
     final userDoc = await _firestoreService.getUser(user.uid);
-    final isAutoAdmin = AppConstants.adminEmails.contains(currentUserModel.email.toLowerCase().trim());
+    final isAutoAdmin = AppConstants.adminEmails.contains(
+      currentUserModel.email.toLowerCase().trim(),
+    );
 
     if (userDoc != null) {
       _userModel = userDoc.copyWith(
@@ -145,10 +149,7 @@ class AuthProvider extends ChangeNotifier {
         role: (isAutoAdmin && userDoc.role != AppConstants.userRoleAdmin)
             ? AppConstants.userRoleAdmin
             : userDoc.role,
-        socialPhotoUrls: {
-          ...userDoc.socialPhotoUrls,
-          ...socialPhotoUrls,
-        },
+        socialPhotoUrls: {...userDoc.socialPhotoUrls, ...socialPhotoUrls},
       );
       await _firestoreService.updateUser(user.uid, {
         'email': _userModel!.email,
@@ -162,7 +163,9 @@ class AuthProvider extends ChangeNotifier {
     } else {
       _userModel = currentUserModel.copyWith(
         socialPhotoUrls: socialPhotoUrls,
-        role: isAutoAdmin ? AppConstants.userRoleAdmin : AppConstants.userRoleUser,
+        role: isAutoAdmin
+            ? AppConstants.userRoleAdmin
+            : AppConstants.userRoleUser,
       );
       await _firestoreService.createUser(_userModel!);
     }
@@ -189,14 +192,18 @@ class AuthProvider extends ChangeNotifier {
         await _authService.updateDisplayName(displayName);
       }
       final user = credential.user!;
-      final isAutoAdmin = AppConstants.adminEmails.contains(email.toLowerCase().trim());
+      final isAutoAdmin = AppConstants.adminEmails.contains(
+        email.toLowerCase().trim(),
+      );
       final userModel = UserModel(
         uid: user.uid,
         email: user.email ?? email,
         displayName: displayName ?? user.displayName ?? '',
         photoUrl: user.photoURL,
         phoneNumber: user.phoneNumber,
-        role: isAutoAdmin ? AppConstants.userRoleAdmin : AppConstants.userRoleUser,
+        role: isAutoAdmin
+            ? AppConstants.userRoleAdmin
+            : AppConstants.userRoleUser,
         createdAt: user.metadata.creationTime ?? DateTime.now(),
         providers: user.providerData.map((p) => p.providerId).toList(),
       );
@@ -259,10 +266,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> unlinkProvider(String providerId) async {
-    if ((_firebaseUser?.providerData.length ?? 0) <= 1 && !hasPasswordProvider) {
+    if ((_firebaseUser?.providerData.length ?? 0) <= 1 &&
+        !hasPasswordProvider) {
       throw FirebaseAuthException(
         code: 'requires-additional-sign-in-method',
-        message: 'Add another sign-in method or set a password before disconnecting this account.',
+        message:
+            'Add another sign-in method or set a password before disconnecting this account.',
       );
     }
 
@@ -301,10 +310,7 @@ class AuthProvider extends ChangeNotifier {
     await _run(() => _authService.sendPasswordResetEmail(email));
   }
 
-  Future<void> updateProfile({
-    String? displayName,
-    String? photoUrl,
-  }) async {
+  Future<void> updateProfile({String? displayName, String? photoUrl}) async {
     try {
       if (displayName != null) {
         await _authService.updateDisplayName(displayName);
@@ -418,6 +424,8 @@ class AuthProvider extends ChangeNotifier {
           return 'This sign-in method is not enabled.';
         case 'sign-in-cancelled':
           return 'Sign in was cancelled.';
+        case 'sign-in-timeout':
+          return error.message ?? 'Google sign in timed out. Please try again.';
         case 'provider-already-linked':
           return 'This provider is already connected to your account.';
         case 'credential-already-in-use':
@@ -427,7 +435,8 @@ class AuthProvider extends ChangeNotifier {
         case 'requires-additional-sign-in-method':
         case 'missing-email':
         case 'unsupported-provider':
-          return error.message ?? 'Please review the account setup and try again.';
+          return error.message ??
+              'Please review the account setup and try again.';
         default:
           return error.message ?? 'An unexpected error occurred.';
       }

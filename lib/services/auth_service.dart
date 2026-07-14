@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -52,10 +55,7 @@ class AuthService {
     }
 
     if (_auth.currentUser?.isAnonymous == true) {
-      return _linkAnonymousWithEmail(
-        email: trimmedEmail,
-        password: password,
-      );
+      return _linkAnonymousWithEmail(email: trimmedEmail, password: password);
     }
 
     return _auth.createUserWithEmailAndPassword(
@@ -76,10 +76,32 @@ class AuthService {
   }
 
   Future<UserCredential> signInWithGoogle() async {
+    if (kIsWeb) {
+      final provider = GoogleAuthProvider()
+        ..addScope('email')
+        ..addScope('profile');
+
+      try {
+        return await _auth
+            .signInWithPopup(provider)
+            .timeout(const Duration(seconds: 45));
+      } on TimeoutException {
+        throw FirebaseAuthException(
+          code: 'sign-in-timeout',
+          message:
+              'Google sign in timed out. Please allow pop-ups and try again.',
+        );
+      }
+    }
+
     await GoogleSignIn.instance.signOut();
-    final googleUser = await GoogleSignIn.instance.authenticate();
+    final googleUser = await GoogleSignIn.instance.authenticate().timeout(
+      const Duration(seconds: 45),
+    );
     final googleAuth = googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+    final credential = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+    );
     return _signInWithCredential(
       credential,
       fallbackEmailProvider: googleUser.email,
@@ -105,8 +127,9 @@ class AuthService {
       );
     }
 
-    final credential =
-        FacebookAuthProvider.credential(result.accessToken!.tokenString);
+    final credential = FacebookAuthProvider.credential(
+      result.accessToken!.tokenString,
+    );
     final userData = await FacebookAuth.instance.getUserData();
 
     return _signInWithCredential(
@@ -178,9 +201,13 @@ class AuthService {
   }) async {
     UserCredential credential;
     if (providerId == 'google.com') {
-      credential = await _auth.signInWithCredential(await _getGoogleCredential());
+      credential = await _auth.signInWithCredential(
+        await _getGoogleCredential(),
+      );
     } else if (providerId == 'facebook.com') {
-      credential = await _auth.signInWithCredential(await _getFacebookCredential());
+      credential = await _auth.signInWithCredential(
+        await _getFacebookCredential(),
+      );
     } else {
       throw FirebaseAuthException(
         code: 'unsupported-provider',
@@ -266,17 +293,21 @@ class AuthService {
         final existingProviders = existingUser?.providers ?? <String>[];
         throw AccountCollisionException(
           email: email,
-          existingProviders:
-              existingProviders.isEmpty ? <String>['password'] : existingProviders,
+          existingProviders: existingProviders.isEmpty
+              ? <String>['password']
+              : existingProviders,
           pendingCredential: credential,
         );
       }
       rethrow;
     }
   }
+
   Future<AuthCredential> _getGoogleCredential() async {
     await GoogleSignIn.instance.signOut();
-    final googleUser = await GoogleSignIn.instance.authenticate();
+    final googleUser = await GoogleSignIn.instance.authenticate().timeout(
+      const Duration(seconds: 45),
+    );
     final googleAuth = googleUser.authentication;
     return GoogleAuthProvider.credential(idToken: googleAuth.idToken);
   }
