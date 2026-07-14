@@ -27,7 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductProvider>().fetchProducts();
+      final provider = context.read<ProductProvider>();
+      provider.resetFilters();
+      provider.fetchProducts();
     });
   }
 
@@ -144,7 +146,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSearchBar(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.products),
+      onTap: () => Navigator.pushNamed(context, AppRoutes.products).then((_) {
+        if (mounted) context.read<ProductProvider>().resetFilters();
+      }),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
@@ -208,7 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: () =>
-                          Navigator.pushNamed(context, AppRoutes.products),
+                          Navigator.pushNamed(context, AppRoutes.products).then((_) {
+                        if (mounted) context.read<ProductProvider>().resetFilters();
+                      }),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.white,
                         foregroundColor: AppColors.primary,
@@ -291,7 +297,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         TextButton(
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.products),
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.products).then((_) {
+            if (mounted) context.read<ProductProvider>().resetFilters();
+          }),
           child: const Text(
             'See All',
             style: TextStyle(
@@ -324,13 +332,10 @@ class _HomeScreenState extends State<HomeScreen> {
               emoji: icons[index],
               isSelected: isSelected,
               onTap: () {
-                if (category == 'All') {
-                  provider.setCategory('All');
-                  Navigator.pushNamed(context, AppRoutes.products);
-                } else {
-                  provider.setCategory(category);
-                  Navigator.pushNamed(context, AppRoutes.products);
-                }
+                provider.setCategory(category);
+                Navigator.pushNamed(context, AppRoutes.products).then((_) {
+                  if (mounted) context.read<ProductProvider>().resetFilters();
+                });
               },
             ),
           );
@@ -399,7 +404,10 @@ class _HomeScreenState extends State<HomeScreen> {
         switch (index) {
           case 1:
             Navigator.pushNamed(context, AppRoutes.products).then((_) {
-              if (mounted) setState(() => _currentNavIndex = 0);
+              if (mounted) {
+                context.read<ProductProvider>().resetFilters();
+                setState(() => _currentNavIndex = 0);
+              }
             });
             break;
           case 2:

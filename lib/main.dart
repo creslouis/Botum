@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'app/app.dart';
 import 'firebase_options.dart';
-import 'providers/auth_provider.dart';
+import 'providers/auth_provider.dart' as app;
 import 'providers/cart_provider.dart';
 import 'providers/favorites_provider.dart';
 import 'providers/product_provider.dart';
@@ -39,10 +40,18 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => app.AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()..loadCart()),
-        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(
+          create: (context) {
+            final provider = FavoritesProvider();
+            provider.initAuthListener(
+              FirebaseAuth.instance.authStateChanges(),
+            );
+            return provider;
+          },
+        ),
       ],
       child: const BotumApp(),
     ),

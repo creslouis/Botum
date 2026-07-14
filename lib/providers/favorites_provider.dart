@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/product_model.dart';
 import '../services/firestore_service.dart';
@@ -12,11 +13,18 @@ class FavoritesProvider extends ChangeNotifier {
   String? _error;
   String? _userId;
   StreamSubscription<List<String>>? _favStreamSub;
+  StreamSubscription? _authSub;
 
   List<ProductModel> get favorites => _favorites;
   int get favoriteCount => _favorites.length;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  void initAuthListener(Stream<User?> authStream) {
+    _authSub = authStream.listen((user) {
+      setUserId(user?.uid);
+    });
+  }
 
   void setUserId(String? userId) {
     if (_userId != userId) {
@@ -121,6 +129,7 @@ class FavoritesProvider extends ChangeNotifier {
   @override
   void dispose() {
     _favStreamSub?.cancel();
+    _authSub?.cancel();
     super.dispose();
   }
 }

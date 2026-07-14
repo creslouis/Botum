@@ -99,6 +99,13 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void resetFilters() {
+    _selectedCategory = 'All';
+    _searchQuery = '';
+    _applyFilters();
+    notifyListeners();
+  }
+
   ProductModel? getProductById(String id) {
     // Use safe firstWhere with orElse instead of try/catch
     return _products.firstWhere(
