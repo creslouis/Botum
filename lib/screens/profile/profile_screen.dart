@@ -39,8 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildConnectionRow(context, authProvider, 'facebook.com', Icons.facebook),
               _buildConnectionRow(context, authProvider, 'telegram', Icons.send),
               _buildPasswordRow(context, authProvider),
-              if (!authProvider.isGuest)
-                _buildPhotoRow(context, authProvider),
+              _buildPhotoRow(context, authProvider),
             ],
           ),
           const SizedBox(height: 16),
@@ -250,11 +249,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final trailing = !connection.isAvailable
         ? Text('Soon', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.grey))
         : TextButton(
-            onPressed: authProvider.isGuest
-                ? null
-                : () => connection.isConnected
-                    ? _disconnectProvider(context, providerId)
-                    : _connectProvider(context, providerId),
+            onPressed: () {
+              if (authProvider.isGuest) {
+                _upgradeGuestWithProvider(context, providerId);
+              } else if (connection.isConnected) {
+                _disconnectProvider(context, providerId);
+              } else {
+                _connectProvider(context, providerId);
+              }
+            },
             child: Text(connection.isConnected ? 'Disconnect' : 'Connect'),
           );
 
@@ -275,12 +278,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ? 'Send a reset email'
           : 'Add a Botum password for this social account',
       trailing: TextButton(
-        onPressed: authProvider.isGuest
-            ? null
-            : () => authProvider.hasPasswordProvider
-                ? _sendPasswordReset(context)
-                : _showSetPasswordDialog(context),
-        child: Text(authProvider.hasPasswordProvider ? 'Reset' : 'Set'),
+        onPressed: () {
+          if (authProvider.isGuest) {
+            _upgradeGuestWithProvider(context, 'password');
+          } else if (authProvider.hasPasswordProvider) {
+            _sendPasswordReset(context);
+          } else {
+            _showSetPasswordDialog(context);
+          }
+        },
+        child: Text(
+          authProvider.isGuest
+              ? 'Set'
+              : authProvider.hasPasswordProvider
+                  ? 'Reset'
+                  : 'Set',
+        ),
       ),
       showChevron: false,
     );
@@ -347,6 +360,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _upgradeGuestWithProvider(BuildContext context, String providerId) async {
+    final authProvider = context.read<AuthProvider>();
+    try {
+      if (providerId == 'password') {
+        if (!mounted) return;
+        _showSignInInsteadDialog(context, 'Set a password to your account instead.');
+        return;
+      }
+      await authProvider.linkProvider(providerId);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Account upgraded with ${authProvider.providerLabel(providerId)}.'),
+        ),
+      );
+      setState(() {});
+    } catch (e) {
+      if (!context.mounted) return;
+      final errorMsg = e.toString().replaceAll('Exception: ', '');
+      if (mounted) {
+        _showSignInInsteadDialog(context, errorMsg);
+      }
+    }
+  }
+
+  void _showSignInInsteadDialog(BuildContext context, String errorMsg) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sign In Instead'),
+        content: Text(
+          'Could not upgrade guest account: $errorMsg\n\n'
+          'You will be signed out so you can sign in with your chosen provider.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthProvider>().signOut();
+              Navigator.pushNamedAndRemoveUntil(context, AppRoutes.welcome, (route) => false);
+            },
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _disconnectProvider(BuildContext context, String providerId) async {
