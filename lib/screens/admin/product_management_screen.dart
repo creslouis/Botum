@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/constants/app_constants.dart';
 import '../../models/product_model.dart';
 import '../../services/firestore_service.dart';
-import '../../services/storage_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../utils/helpers.dart';
@@ -309,8 +307,6 @@ class _ProductForm extends StatefulWidget {
 
 class _ProductFormState extends State<_ProductForm> {
   final _formKey = GlobalKey<FormState>();
-  final _storageService = StorageService();
-  final _imagePicker = ImagePicker();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _priceCtrl;
@@ -321,7 +317,6 @@ class _ProductFormState extends State<_ProductForm> {
   late List<String> _sizes;
   final TextEditingController _imageUrlCtrl = TextEditingController();
   late List<String> _imageUrls;
-  bool _isUploadingImage = false;
   bool _isSaving = false;
 
   @override
@@ -484,25 +479,9 @@ class _ProductFormState extends State<_ProductForm> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: _isUploadingImage ? null : _pickAndUploadImages,
-                icon: _isUploadingImage
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.upload_file),
-                label: Text(
-                  _isUploadingImage
-                      ? 'Uploading image...'
-                      : 'Upload image from device',
-                ),
-              ),
               const SizedBox(height: 6),
               Text(
-                'Recommended: upload images here instead of using random website links.',
+                'Use a direct public image URL ending in .jpg, .png, or .webp. Avoid Google Drive preview pages and social media pages.',
                 style: AppTextStyles.caption,
               ),
               if (_imageUrls.isNotEmpty) ...[
@@ -592,7 +571,7 @@ class _ProductFormState extends State<_ProductForm> {
               ],
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _isSaving || _isUploadingImage ? null : _submit,
+                onPressed: _isSaving ? null : _submit,
                 child: _isSaving
                     ? const SizedBox(
                         width: 20,
@@ -637,34 +616,6 @@ class _ProductFormState extends State<_ProductForm> {
       await widget.onSave(data);
     } finally {
       if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
-  Future<void> _pickAndUploadImages() async {
-    final images = await _imagePicker.pickMultiImage(imageQuality: 85);
-    if (images.isEmpty || !mounted) return;
-
-    setState(() => _isUploadingImage = true);
-    try {
-      final urls = await _storageService.uploadProductImages(
-        images,
-        _productId,
-      );
-      if (!mounted) return;
-      setState(() => _imageUrls.addAll(urls));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${urls.length} image(s) uploaded.')),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Image upload failed: $error'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isUploadingImage = false);
     }
   }
 }
