@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/constants/app_constants.dart';
 import '../../models/product_model.dart';
 import '../../services/firestore_service.dart';
+import '../../services/storage_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/product_provider.dart';
+import '../../utils/helpers.dart';
 
 class AdminProductManagementScreen extends StatefulWidget {
   final String? editProductId;
@@ -65,7 +68,11 @@ class _AdminProductManagementScreenState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.inventory_2, size: 64, color: AppColors.grey),
+                  const Icon(
+                    Icons.inventory_2,
+                    size: 64,
+                    color: AppColors.grey,
+                  ),
                   const SizedBox(height: 16),
                   Text('No products yet', style: AppTextStyles.headingSmall),
                   const SizedBox(height: 16),
@@ -166,21 +173,24 @@ class _AdminProductManagementScreenState
 
     if (confirmed != true || !mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Seeding products...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Seeding products...')));
 
     final provider = ProductProvider();
-    // Access mock products by calling fetchProducts first
-    await provider.fetchProducts();
-    final mockProducts = provider.allProducts;
+    try {
+      // Access mock products by calling fetchProducts first
+      await provider.fetchProducts();
+      final mockProducts = provider.allProducts;
+      final count = await _firestore.seedProducts(mockProducts);
 
-    final count = await _firestore.seedProducts(mockProducts);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$count new products seeded to Firestore!')),
-    );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$count new products seeded to Firestore!')),
+      );
+    } finally {
+      provider.dispose();
+    }
   }
 }
 
@@ -221,10 +231,12 @@ class _ProductListItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(product.name,
-                      style: AppTextStyles.bodyLarge,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
+                  Text(
+                    product.name,
+                    style: AppTextStyles.bodyLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     '\$${product.price.toStringAsFixed(2)}',
@@ -237,7 +249,10 @@ class _ProductListItem extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(icon: const Icon(Icons.edit, size: 20), onPressed: onEdit),
+            IconButton(
+              icon: const Icon(Icons.edit, size: 20),
+              onPressed: onEdit,
+            ),
             IconButton(
               icon: const Icon(Icons.delete, size: 20, color: AppColors.error),
               onPressed: onDelete,
@@ -249,9 +264,10 @@ class _ProductListItem extends StatelessWidget {
   }
 
   Widget _buildProductImage(String url) {
-    if (url.startsWith('http')) {
+    final normalizedUrl = Helpers.normalizeImageUrl(url);
+    if (Helpers.isRemoteImageUrl(normalizedUrl)) {
       return CachedNetworkImage(
-        imageUrl: url,
+        imageUrl: normalizedUrl,
         fit: BoxFit.cover,
         memCacheWidth: 128,
         fadeInDuration: const Duration(milliseconds: 300),
@@ -264,9 +280,9 @@ class _ProductListItem extends StatelessWidget {
           child: const Icon(Icons.broken_image, color: AppColors.grey),
         ),
       );
-    } else if (url.startsWith('assets/')) {
+    } else if (Helpers.isAssetImagePath(normalizedUrl)) {
       return Image.asset(
-        url,
+        normalizedUrl,
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => Container(
           color: AppColors.lightGrey,
@@ -283,7 +299,7 @@ class _ProductListItem extends StatelessWidget {
 
 class _ProductForm extends StatefulWidget {
   final ProductModel? product;
-  final Function(Map<String, dynamic>) onSave;
+  final Future<void> Function(Map<String, dynamic>) onSave;
 
   const _ProductForm({this.product, required this.onSave});
 
@@ -293,28 +309,41 @@ class _ProductForm extends StatefulWidget {
 
 class _ProductFormState extends State<_ProductForm> {
   final _formKey = GlobalKey<FormState>();
+  final _storageService = StorageService();
+  final _imagePicker = ImagePicker();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _priceCtrl;
   late final TextEditingController _stockCtrl;
+  late final String _productId;
   late String _category;
   late List<String> _colors;
   late List<String> _sizes;
   final TextEditingController _imageUrlCtrl = TextEditingController();
   late List<String> _imageUrls;
+  bool _isUploadingImage = false;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     final p = widget.product;
+    _productId =
+        p?.id ??
+        FirebaseFirestore.instance
+            .collection(AppConstants.collectionProducts)
+            .doc()
+            .id;
     _nameCtrl = TextEditingController(text: p?.name ?? '');
     _descCtrl = TextEditingController(text: p?.description ?? '');
     _priceCtrl = TextEditingController(
-        text: p != null ? p.price.toString() : '');
+      text: p != null ? p.price.toString() : '',
+    );
     _stockCtrl = TextEditingController(
-        text: p != null ? p.stock.toString() : '');
-    _category = AppConstants.categories.contains(p?.category) 
-        ? p!.category 
+      text: p != null ? p.stock.toString() : '',
+    );
+    _category = AppConstants.categories.contains(p?.category)
+        ? p!.category
         : AppConstants.categories.first;
     _colors = List.from(p?.colors ?? []);
     _sizes = List.from(p?.sizes ?? []);
@@ -404,7 +433,11 @@ class _ProductFormState extends State<_ProductForm> {
                 ),
                 initialValue: _colors.join(', '),
                 onChanged: (v) {
-                  _colors = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                  _colors = v
+                      .split(',')
+                      .map((e) => e.trim())
+                      .where((e) => e.isNotEmpty)
+                      .toList();
                 },
               ),
               const SizedBox(height: 12),
@@ -414,7 +447,11 @@ class _ProductFormState extends State<_ProductForm> {
                 ),
                 initialValue: _sizes.join(', '),
                 onChanged: (v) {
-                  _sizes = v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                  _sizes = v
+                      .split(',')
+                      .map((e) => e.trim())
+                      .where((e) => e.isNotEmpty)
+                      .toList();
                 },
               ),
               const SizedBox(height: 16),
@@ -432,7 +469,7 @@ class _ProductFormState extends State<_ProductForm> {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () {
-                      final url = _imageUrlCtrl.text.trim();
+                      final url = Helpers.normalizeImageUrl(_imageUrlCtrl.text);
                       if (url.isNotEmpty) {
                         setState(() {
                           _imageUrls.add(url);
@@ -440,9 +477,33 @@ class _ProductFormState extends State<_ProductForm> {
                         });
                       }
                     },
-                    icon: const Icon(Icons.add_circle, color: AppColors.primary),
+                    icon: const Icon(
+                      Icons.add_circle,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _isUploadingImage ? null : _pickAndUploadImages,
+                icon: _isUploadingImage
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.upload_file),
+                label: Text(
+                  _isUploadingImage
+                      ? 'Uploading image...'
+                      : 'Upload image from device',
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Recommended: upload images here instead of using random website links.',
+                style: AppTextStyles.caption,
               ),
               if (_imageUrls.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -451,37 +512,75 @@ class _ProductFormState extends State<_ProductForm> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _imageUrls.length,
-                    separatorBuilder: (_, _)=> const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       return Stack(
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: CachedNetworkImage(
-                              imageUrl: _imageUrls[index],
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, _, _) => Container(
-                                width: 80,
-                                height: 80,
-                                color: AppColors.lightGrey,
-                                child: const Icon(Icons.broken_image, color: AppColors.grey),
-                              ),
-                            ),
+                            child: Helpers.isRemoteImageUrl(_imageUrls[index])
+                                ? CachedNetworkImage(
+                                    imageUrl: Helpers.normalizeImageUrl(
+                                      _imageUrls[index],
+                                    ),
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (_, _, _) => Container(
+                                      width: 80,
+                                      height: 80,
+                                      color: AppColors.lightGrey,
+                                      child: const Icon(
+                                        Icons.broken_image,
+                                        color: AppColors.grey,
+                                      ),
+                                    ),
+                                  )
+                                : Helpers.isAssetImagePath(_imageUrls[index])
+                                ? Image.asset(
+                                    Helpers.normalizeImageUrl(
+                                      _imageUrls[index],
+                                    ),
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => Container(
+                                      width: 80,
+                                      height: 80,
+                                      color: AppColors.lightGrey,
+                                      child: const Icon(
+                                        Icons.broken_image,
+                                        color: AppColors.grey,
+                                      ),
+                                    ),
+                                  )
+                                : Container(
+                                    width: 80,
+                                    height: 80,
+                                    color: AppColors.lightGrey,
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      color: AppColors.grey,
+                                    ),
+                                  ),
                           ),
                           Positioned(
                             top: 2,
                             right: 2,
                             child: GestureDetector(
-                              onTap: () => setState(() => _imageUrls.removeAt(index)),
+                              onTap: () =>
+                                  setState(() => _imageUrls.removeAt(index)),
                               child: Container(
                                 decoration: const BoxDecoration(
                                   color: Colors.black54,
                                   shape: BoxShape.circle,
                                 ),
                                 padding: const EdgeInsets.all(2),
-                                child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -493,8 +592,14 @@ class _ProductFormState extends State<_ProductForm> {
               ],
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _submit,
-                child: const Text('Save Product'),
+                onPressed: _isSaving || _isUploadingImage ? null : _submit,
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save Product'),
               ),
               const SizedBox(height: 32),
             ],
@@ -507,14 +612,10 @@ class _ProductFormState extends State<_ProductForm> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final productId = widget.product?.id ??
-        FirebaseFirestore.instance
-            .collection(AppConstants.collectionProducts)
-            .doc()
-            .id;
+    setState(() => _isSaving = true);
 
     final data = <String, dynamic>{
-      'id': productId,
+      'id': _productId,
       'name': _nameCtrl.text.trim(),
       'description': _descCtrl.text.trim(),
       'price': double.tryParse(_priceCtrl.text.trim()) ?? 0,
@@ -522,11 +623,48 @@ class _ProductFormState extends State<_ProductForm> {
       'colors': _colors,
       'sizes': _sizes,
       'stock': int.tryParse(_stockCtrl.text.trim()) ?? 0,
-      'images': _imageUrls,
+      'images': _imageUrls
+          .map(Helpers.normalizeImageUrl)
+          .where((url) => url.isNotEmpty)
+          .toList(),
       'isActive': true,
-      'createdAt': DateTime.now().toIso8601String(),
+      'createdAt':
+          widget.product?.createdAt.toIso8601String() ??
+          DateTime.now().toIso8601String(),
     };
 
-    widget.onSave(data);
+    try {
+      await widget.onSave(data);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _pickAndUploadImages() async {
+    final images = await _imagePicker.pickMultiImage(imageQuality: 85);
+    if (images.isEmpty || !mounted) return;
+
+    setState(() => _isUploadingImage = true);
+    try {
+      final urls = await _storageService.uploadProductImages(
+        images,
+        _productId,
+      );
+      if (!mounted) return;
+      setState(() => _imageUrls.addAll(urls));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${urls.length} image(s) uploaded.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Image upload failed: $error'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
   }
 }

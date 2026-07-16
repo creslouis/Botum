@@ -42,9 +42,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (product == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(
-          child: Text('Product not found'),
-        ),
+        body: const Center(child: Text('Product not found')),
       );
     }
 
@@ -132,8 +130,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   setState(() => _currentImageIndex = index),
               itemCount: images.length,
               itemBuilder: (context, index) {
-                final url = images[index];
-                if (url.startsWith('http')) {
+                final url = Helpers.normalizeImageUrl(images[index]);
+                if (Helpers.isRemoteImageUrl(url)) {
                   return CachedNetworkImage(
                     imageUrl: url,
                     fit: BoxFit.cover,
@@ -144,7 +142,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     placeholder: (_, _) => _imagePlaceholder(),
                     errorWidget: (_, _, _) => _imagePlaceholder(),
                   );
-                } else if (url.startsWith('assets/')) {
+                } else if (Helpers.isAssetImagePath(url)) {
                   return Image.asset(
                     url,
                     fit: BoxFit.cover,
@@ -286,10 +284,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(height: 6),
         Text(
           _selectedColor ?? '',
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.grey,
-          ),
+          style: const TextStyle(fontSize: 12, color: AppColors.grey),
         ),
       ],
     );
@@ -369,10 +364,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(height: 6),
         Text(
           sizes.join(' | '),
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.grey,
-          ),
+          style: const TextStyle(fontSize: 14, color: AppColors.grey),
         ),
       ],
     );
@@ -416,33 +408,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        ...features.map((feature) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '• ',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                      height: 1.2,
+        ...features.map(
+          (feature) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '• ',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                    height: 1.2,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    feature,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.darkGrey,
+                      height: 1.3,
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      feature,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.darkGrey,
-                        height: 1.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -479,7 +473,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.grey.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -505,10 +501,7 @@ border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
                 ),
                 child: const Text(
                   'BUY NOW',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
                 ),
               ),
             ),
@@ -540,10 +533,7 @@ border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
                 ),
                 child: const Text(
                   'Add to Cart',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
                 ),
               ),
             ),
@@ -582,10 +572,7 @@ border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
           ),
           Text(
             _quantity.toString().padLeft(2, '0'),
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
           ),
           GestureDetector(
             onTap: () {

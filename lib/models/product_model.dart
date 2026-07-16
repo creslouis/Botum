@@ -1,3 +1,5 @@
+import '../utils/helpers.dart';
+
 class ProductModel {
   final String id;
   final String name;
@@ -33,7 +35,10 @@ class ProductModel {
       'name': name,
       'description': description,
       'price': price,
-      'images': images,
+      'images': images
+          .map(Helpers.normalizeImageUrl)
+          .where((e) => e.isNotEmpty)
+          .toList(),
       'category': category,
       'colors': colors,
       'sizes': sizes,
@@ -45,25 +50,34 @@ class ProductModel {
   }
 
   factory ProductModel.fromMap(Map<String, dynamic> map) {
+    final mappedImages = (map['images'] as List<dynamic>?)
+        ?.whereType<String>()
+        .map(Helpers.normalizeImageUrl)
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final legacyImageUrl = Helpers.normalizeImageUrl(
+      (map['imageUrl'] ?? map['image_url'] ?? '') as String,
+    );
+
     return ProductModel(
       id: map['id'] as String? ?? '',
       name: map['name'] as String? ?? '',
       description: map['description'] as String? ?? '',
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
-      images: (map['images'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          [],
+      images: mappedImages?.isNotEmpty == true
+          ? mappedImages!
+          : legacyImageUrl.isNotEmpty
+          ? [legacyImageUrl]
+          : [],
       category: map['category'] as String? ?? 'Handicraft',
-      colors: (map['colors'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      colors:
+          (map['colors'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           [],
-      sizes: (map['sizes'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      sizes:
+          (map['sizes'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           [],
-      features: (map['features'] as List<dynamic>?)
+      features:
+          (map['features'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],

@@ -173,23 +173,24 @@ class _AdminOrderManagementScreenState
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
                             ),
-                            items: [
-                              'all',
-                              'pending',
-                              'confirmed',
-                              'shipped',
-                              'delivered',
-                            ].map((status) {
-                              return DropdownMenuItem(
-                                value: status,
-                                child: Text(
-                                  status == 'all'
-                                      ? 'All Status'
-                                      : status[0].toUpperCase() +
-                                          status.substring(1),
-                                ),
-                              );
-                            }).toList(),
+                            items:
+                                [
+                                  'all',
+                                  'pending',
+                                  'confirmed',
+                                  'shipped',
+                                  'delivered',
+                                ].map((status) {
+                                  return DropdownMenuItem(
+                                    value: status,
+                                    child: Text(
+                                      status == 'all'
+                                          ? 'All Status'
+                                          : status[0].toUpperCase() +
+                                                status.substring(1),
+                                    ),
+                                  );
+                                }).toList(),
                             onChanged: (value) {
                               if (value != null) {
                                 setState(() => _filterStatus = value);
@@ -202,8 +203,7 @@ class _AdminOrderManagementScreenState
                     const SizedBox(width: 8),
                     if (_filterStatus != 'all')
                       GestureDetector(
-                        onTap: () =>
-                            setState(() => _filterStatus = 'all'),
+                        onTap: () => setState(() => _filterStatus = 'all'),
                         child: Container(
                           height: 44,
                           width: 44,
@@ -278,8 +278,7 @@ class _AdminOrderManagementScreenState
                     if (_filterDate != null) ...[
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: () =>
-                            setState(() => _filterDate = null),
+                        onTap: () => setState(() => _filterDate = null),
                         child: Container(
                           height: 44,
                           width: 44,
@@ -505,14 +504,16 @@ class _OrderCard extends StatelessWidget {
                       child: SizedBox(
                         width: 36,
                         height: 36,
-                        child: item.productImage.startsWith('http')
+                        child: Helpers.isRemoteImageUrl(item.productImage)
                             ? CachedNetworkImage(
-                                imageUrl: item.productImage,
+                                imageUrl: Helpers.normalizeImageUrl(
+                                  item.productImage,
+                                ),
                                 fit: BoxFit.cover,
                               )
-                            : item.productImage.startsWith('assets/')
+                            : Helpers.isAssetImagePath(item.productImage)
                             ? Image.asset(
-                                item.productImage,
+                                Helpers.normalizeImageUrl(item.productImage),
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
                                     const Icon(Icons.image, size: 18),

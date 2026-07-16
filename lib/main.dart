@@ -23,6 +23,10 @@ void main() async {
     );
   }
 
+  if (kIsWeb) {
+    await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+  }
+
   try {
     await GoogleSignIn.instance.initialize(
       serverClientId: kIsWeb ? null : _googleServerClientId,

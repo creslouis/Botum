@@ -6,31 +6,34 @@ class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   Future<String> uploadProductImage(XFile image, String productId) async {
-    final ref = _storage
-        .ref()
-        .child('${AppConstants.storageProducts}/$productId/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final contentType = image.mimeType ?? 'image/jpeg';
+    final extension = contentType.split('/').last.replaceAll('jpeg', 'jpg');
+    final ref = _storage.ref().child(
+      '${AppConstants.storageProducts}/$productId/${DateTime.now().millisecondsSinceEpoch}.$extension',
+    );
     final uploadTask = ref.putData(
       await image.readAsBytes(),
-      SettableMetadata(contentType: 'image/jpeg'),
+      SettableMetadata(contentType: contentType),
     );
     final snapshot = await uploadTask;
     return await snapshot.ref.getDownloadURL();
   }
 
   Future<List<String>> uploadProductImages(
-      List<XFile> images, String productId) async {
+    List<XFile> images,
+    String productId,
+  ) async {
     // Upload in parallel for speed
     final futures = images.map((img) => uploadProductImage(img, productId));
     return Future.wait(futures);
   }
 
   Future<String> uploadAvatar(XFile image, String uid) async {
-    final ref = _storage
-        .ref()
-        .child('${AppConstants.storageAvatars}/$uid.jpg');
+    final contentType = image.mimeType ?? 'image/jpeg';
+    final ref = _storage.ref().child('${AppConstants.storageAvatars}/$uid.jpg');
     final uploadTask = ref.putData(
       await image.readAsBytes(),
-      SettableMetadata(contentType: 'image/jpeg'),
+      SettableMetadata(contentType: contentType),
     );
     final snapshot = await uploadTask;
     return await snapshot.ref.getDownloadURL();
@@ -38,12 +41,14 @@ class StorageService {
 
   /// Upload a payment method icon image to Firebase Storage
   Future<String> uploadPaymentMethodIcon(XFile image, String methodId) async {
-    final ref = _storage
-        .ref()
-        .child('${AppConstants.storagePaymentMethods}/$methodId/icon_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final contentType = image.mimeType ?? 'image/jpeg';
+    final extension = contentType.split('/').last.replaceAll('jpeg', 'jpg');
+    final ref = _storage.ref().child(
+      '${AppConstants.storagePaymentMethods}/$methodId/icon_${DateTime.now().millisecondsSinceEpoch}.$extension',
+    );
     final uploadTask = ref.putData(
       await image.readAsBytes(),
-      SettableMetadata(contentType: 'image/jpeg'),
+      SettableMetadata(contentType: contentType),
     );
     final snapshot = await uploadTask;
     return await snapshot.ref.getDownloadURL();

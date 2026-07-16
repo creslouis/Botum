@@ -3,11 +3,29 @@ import 'package:intl/intl.dart';
 class Helpers {
   Helpers._();
 
+  static String normalizeImageUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+    if (trimmed.startsWith('assets/')) return trimmed;
+    if (trimmed.startsWith('//')) return 'https:$trimmed';
+    if (trimmed.toLowerCase().startsWith('www.')) return 'https://$trimmed';
+    return trimmed;
+  }
+
+  static bool isRemoteImageUrl(String value) {
+    final normalized = normalizeImageUrl(value);
+    final uri = Uri.tryParse(normalized);
+    return uri != null &&
+        (uri.scheme.toLowerCase() == 'http' ||
+            uri.scheme.toLowerCase() == 'https');
+  }
+
+  static bool isAssetImagePath(String value) {
+    return normalizeImageUrl(value).startsWith('assets/');
+  }
+
   static String formatPrice(double price) {
-    final format = NumberFormat.currency(
-      symbol: '\$ ',
-      decimalDigits: 2,
-    );
+    final format = NumberFormat.currency(symbol: '\$ ', decimalDigits: 2);
     return format.format(price);
   }
 

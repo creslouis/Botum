@@ -24,7 +24,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   List<OrderModel> _orders = [];
   bool _isLoading = true;
   String? _error;
-  StreamSubscription<List<OrderModel>>? _ordersSub; // Bug fix: store subscription for cancellation
+  StreamSubscription<List<OrderModel>>?
+  _ordersSub; // Bug fix: store subscription for cancellation
 
   @override
   void initState() {
@@ -34,7 +35,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   @override
   void dispose() {
-    _ordersSub?.cancel(); // Bug fix: cancel stream on dispose to prevent memory leak
+    _ordersSub
+        ?.cancel(); // Bug fix: cancel stream on dispose to prevent memory leak
     super.dispose();
   }
 
@@ -54,34 +56,33 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     });
 
     _ordersSub?.cancel();
-    _ordersSub = _firestoreService.getUserOrders(userId).listen(
-      (orders) {
-        if (mounted) {
-          setState(() {
-            _orders = orders;
-            _isLoading = false;
-          });
-        }
-      },
-      onError: (e) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _error = 'Failed to load orders. Please try again.';
-          });
-        }
-      },
-    );
+    _ordersSub = _firestoreService
+        .getUserOrders(userId)
+        .listen(
+          (orders) {
+            if (mounted) {
+              setState(() {
+                _orders = orders;
+                _isLoading = false;
+              });
+            }
+          },
+          onError: (e) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _error = 'Failed to load orders. Please try again.';
+              });
+            }
+          },
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('My Orders'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('My Orders'), centerTitle: true),
       body: _buildBody(),
     );
   }
@@ -118,10 +119,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         itemCount: _orders.length,
         itemBuilder: (context, index) {
           final order = _orders[index];
-          return OrderCard(
-            order: order,
-            onTap: () => _showOrderDetail(order),
-          );
+          return OrderCard(order: order, onTap: () => _showOrderDetail(order));
         },
       ),
     );
@@ -158,8 +156,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pushReplacementNamed(
-                    context, AppRoutes.home),
+                onPressed: () =>
+                    Navigator.pushReplacementNamed(context, AppRoutes.home),
                 child: const Text('Start Shopping'),
               ),
             ),
@@ -206,16 +204,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildDetailRow('Order ID', Helpers.shortenOrderId(order.orderId)),
+              _buildDetailRow(
+                'Order ID',
+                Helpers.shortenOrderId(order.orderId),
+              ),
               _buildDetailRow('Date', Helpers.formatDateTime(order.createdAt)),
               _buildDetailRow(
                 'Status',
                 order.status[0].toUpperCase() + order.status.substring(1),
               ),
-              _buildDetailRow(
-                'Payment',
-                order.paymentMethod,
-              ),
+              _buildDetailRow('Payment', order.paymentMethod),
               const Divider(height: 24),
               const Text(
                 'Items',
@@ -226,64 +224,82 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              ...order.items.map((item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                            width: 56,
-                            height: 56,
-                            child: item.productImage.isEmpty
-                                ? Container(
-                                    color: AppColors.lightGrey,
-                                    child: const Icon(Icons.image_outlined, color: AppColors.grey),
-                                  )
-                                : item.productImage.startsWith('http')
-                                    ? CachedNetworkImage(
-                                        imageUrl: item.productImage,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) => Container(color: AppColors.lightGrey),
-                                        errorWidget: (context, url, error) => const Icon(Icons.image_outlined),
-                                      )
-                                    : Image.asset(
-                                        item.productImage,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined),
-                                      ),
-                          ),
+              ...order.items.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: item.productImage.isEmpty
+                              ? Container(
+                                  color: AppColors.lightGrey,
+                                  child: const Icon(
+                                    Icons.image_outlined,
+                                    color: AppColors.grey,
+                                  ),
+                                )
+                              : Helpers.isRemoteImageUrl(item.productImage)
+                              ? CachedNetworkImage(
+                                  imageUrl: Helpers.normalizeImageUrl(
+                                    item.productImage,
+                                  ),
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) =>
+                                      Container(color: AppColors.lightGrey),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.image_outlined),
+                                )
+                              : Helpers.isAssetImagePath(item.productImage)
+                              ? Image.asset(
+                                  Helpers.normalizeImageUrl(item.productImage),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.image_outlined),
+                                )
+                              : const Icon(Icons.image_outlined),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item.productName,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                      color: AppColors.black)),
-                              const SizedBox(height: 2),
-                              Text('Qty: ${item.quantity}',
-                                  style: AppTextStyles.caption),
-                            ],
-                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.productName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                                color: AppColors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Qty: ${item.quantity}',
+                              style: AppTextStyles.caption,
+                            ),
+                          ],
                         ),
-                        Text(
-                          Helpers.formatPrice(item.totalPrice),
-                          style: AppTextStyles.priceSmall,
-                        ),
-                      ],
-                    ),
-                  )),
+                      ),
+                      Text(
+                        Helpers.formatPrice(item.totalPrice),
+                        style: AppTextStyles.priceSmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const Divider(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Total',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   Text(
                     Helpers.formatPrice(order.totalPrice),
                     style: AppTextStyles.price,
@@ -301,14 +317,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(order.shippingInfo.fullName,
-                    style: AppTextStyles.bodyMedium),
-                Text(order.shippingInfo.street,
-                    style: AppTextStyles.bodyMedium),
-                Text(order.shippingInfo.city,
-                    style: AppTextStyles.bodyMedium),
-                Text(order.shippingInfo.phone,
-                    style: AppTextStyles.bodyMedium),
+                Text(
+                  order.shippingInfo.fullName,
+                  style: AppTextStyles.bodyMedium,
+                ),
+                Text(
+                  order.shippingInfo.street,
+                  style: AppTextStyles.bodyMedium,
+                ),
+                Text(order.shippingInfo.city, style: AppTextStyles.bodyMedium),
+                Text(order.shippingInfo.phone, style: AppTextStyles.bodyMedium),
               ],
             ],
           ),
@@ -324,9 +342,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: AppTextStyles.bodyMedium),
-          Text(value,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w500, color: AppColors.black)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: AppColors.black,
+            ),
+          ),
         ],
       ),
     );

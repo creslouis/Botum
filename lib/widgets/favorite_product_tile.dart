@@ -43,11 +43,7 @@ class FavoriteProductTile extends StatelessWidget {
               borderRadius: BorderRadius.horizontal(
                 left: Radius.circular(AppConstants.cardRadius),
               ),
-              child: SizedBox(
-                width: 100,
-                height: 100,
-                child: _buildImage(),
-              ),
+              child: SizedBox(width: 100, height: 100, child: _buildImage()),
             ),
             Expanded(
               child: Padding(
@@ -67,10 +63,7 @@ class FavoriteProductTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      product.category,
-                      style: AppTextStyles.caption,
-                    ),
+                    Text(product.category, style: AppTextStyles.caption),
                     const SizedBox(height: 6),
                     Text(
                       Helpers.formatPrice(product.price),
@@ -91,8 +84,10 @@ class FavoriteProductTile extends StatelessWidget {
                 if (onAddToCart != null)
                   IconButton(
                     onPressed: onAddToCart,
-                    icon: const Icon(Icons.add_shopping_cart_outlined,
-                        color: AppColors.darkGrey),
+                    icon: const Icon(
+                      Icons.add_shopping_cart_outlined,
+                      color: AppColors.darkGrey,
+                    ),
                     tooltip: 'Add to cart',
                   ),
               ],
@@ -105,8 +100,8 @@ class FavoriteProductTile extends StatelessWidget {
 
   Widget _buildImage() {
     if (product.images.isNotEmpty) {
-      final url = product.images.first;
-      if (url.startsWith('http')) {
+      final url = Helpers.normalizeImageUrl(product.images.first);
+      if (Helpers.isRemoteImageUrl(url)) {
         return CachedNetworkImage(
           imageUrl: url,
           fit: BoxFit.cover,
@@ -118,7 +113,7 @@ class FavoriteProductTile extends StatelessWidget {
           placeholder: (_, _) => _placeholder(),
           errorWidget: (_, _, _) => _placeholder(),
         );
-      } else if (url.startsWith('assets/')) {
+      } else if (Helpers.isAssetImagePath(url)) {
         return Image.asset(
           url,
           fit: BoxFit.cover,

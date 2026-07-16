@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/cart_item_model.dart';
+import '../utils/helpers.dart';
 
 class CartItemTile extends StatelessWidget {
   const CartItemTile({
@@ -123,11 +124,13 @@ class _ProductImage extends StatelessWidget {
       );
     }
 
-    if (imageUrl.startsWith('http')) {
+    final normalizedImageUrl = Helpers.normalizeImageUrl(imageUrl);
+
+    if (Helpers.isRemoteImageUrl(normalizedImageUrl)) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: CachedNetworkImage(
-          imageUrl: imageUrl,
+          imageUrl: normalizedImageUrl,
           width: 74,
           height: 74,
           fit: BoxFit.cover,
@@ -148,11 +151,11 @@ class _ProductImage extends StatelessWidget {
       );
     }
 
-    if (imageUrl.startsWith('assets/')) {
+    if (Helpers.isAssetImagePath(normalizedImageUrl)) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Image.asset(
-          imageUrl,
+          normalizedImageUrl,
           width: 74,
           height: 74,
           fit: BoxFit.cover,

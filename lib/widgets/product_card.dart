@@ -12,11 +12,7 @@ class ProductCard extends StatelessWidget {
   final ProductModel product;
   final VoidCallback onTap;
 
-  const ProductCard({
-    super.key,
-    required this.product,
-    required this.onTap,
-  });
+  const ProductCard({super.key, required this.product, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +49,9 @@ class ProductCard extends StatelessWidget {
                       right: 8,
                       child: GestureDetector(
                         onTap: () {
-                          context.read<FavoritesProvider>().toggleFavorite(product);
+                          context.read<FavoritesProvider>().toggleFavorite(
+                            product,
+                          );
                         },
                         child: Container(
                           padding: const EdgeInsets.all(6),
@@ -104,8 +102,8 @@ class ProductCard extends StatelessWidget {
 
   Widget _buildImage() {
     if (product.images.isNotEmpty) {
-      final url = product.images.first;
-      if (url.startsWith('http')) {
+      final url = Helpers.normalizeImageUrl(product.images.first);
+      if (Helpers.isRemoteImageUrl(url)) {
         return CachedNetworkImage(
           imageUrl: url,
           fit: BoxFit.cover,
@@ -116,7 +114,7 @@ class ProductCard extends StatelessWidget {
           placeholder: (_, _) => _placeholder(),
           errorWidget: (_, _, _) => _placeholder(),
         );
-      } else if (url.startsWith('assets/')) {
+      } else if (Helpers.isAssetImagePath(url)) {
         return Image.asset(
           url,
           fit: BoxFit.cover,

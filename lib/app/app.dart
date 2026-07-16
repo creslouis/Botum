@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
+import '../providers/auth_provider.dart';
 import '../screens/welcome/welcome_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
@@ -29,7 +31,19 @@ class BotumApp extends StatelessWidget {
       title: 'Botum',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.welcome,
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          if (auth.state == AuthState.initial) {
+            return const _LaunchScreen();
+          }
+
+          if (auth.isAuthenticated) {
+            return auth.isAdmin ? const AdminDashboard() : const HomeScreen();
+          }
+
+          return const WelcomeScreen();
+        },
+      ),
       builder: (context, child) {
         return Stack(
           children: [
@@ -116,5 +130,14 @@ class BotumApp extends StatelessWidget {
         }
       },
     );
+  }
+}
+
+class _LaunchScreen extends StatelessWidget {
+  const _LaunchScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

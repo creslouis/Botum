@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:botum/app/app.dart';
+import 'package:botum/screens/welcome/welcome_screen.dart';
 import 'package:botum/widgets/common/pink_button.dart';
 import 'package:botum/widgets/common/custom_text_field.dart';
 
 void main() {
   testWidgets('App should render welcome screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const BotumApp());
+    await tester.pumpWidget(const MaterialApp(home: WelcomeScreen()));
     expect(find.text('Botum'), findsOneWidget);
   });
 
-  testWidgets('Shared widgets render their provided content', (WidgetTester tester) async {
+  testWidgets('Shared widgets render their provided content', (
+    WidgetTester tester,
+  ) async {
     final controller = TextEditingController();
 
     await tester.pumpWidget(
