@@ -265,9 +265,16 @@ class FirestoreService {
         .where('isActive', isEqualTo: true)
         .snapshots()
         .map((snapshot) {
-          final list = snapshot.docs
-              .map((doc) => PaymentMethodModel.fromMap(doc.data() as Map<String, dynamic>))
-              .toList();
+          final list = <PaymentMethodModel>[];
+          for (final doc in snapshot.docs) {
+            try {
+              list.add(PaymentMethodModel.fromMap(
+                doc.data() as Map<String, dynamic>,
+              ));
+            } catch (_) {
+              // Skip malformed documents instead of crashing the stream
+            }
+          }
           list.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
           return list;
         });

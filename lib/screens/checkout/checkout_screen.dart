@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 
@@ -33,9 +34,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _selectedPaymentName = '';
   bool _isSubmitting = false;
 
+  final FirestoreService _firestoreService = FirestoreService();
+
+  List<PaymentMethodModel> _paymentMethods = [];
+  bool _paymentMethodsLoading = true;
+  String? _paymentMethodsError;
+  late final StreamSubscription<List<PaymentMethodModel>> _paymentSubscription;
+
   @override
   void initState() {
     super.initState();
+
+    // Subscribe to stream once in initState — NOT inside build()
+    _paymentSubscription = _firestoreService.getPaymentMethods().listen(
+      (methods) {
+        if (!mounted) return;
+        setState(() {
+          _paymentMethods = methods;
+          _paymentMethodsLoading = false;
+          _paymentMethodsError = null;
+
+          // Auto-select first method if none selected or current is invalid
+          if (_selectedPaymentName.isEmpty ||
+              !methods.any((m) => m.name == _selectedPaymentName)) {
+            if (methods.isNotEmpty) {
+              _selectedPaymentName = methods.first.name;
+            }
+          }
+        });
+      },
+      onError: (error) {
+        if (!mounted) return;
+        setState(() {
+          _paymentMethodsLoading = false;
+          _paymentMethodsError = 'Failed to load payment methods.';
+        });
+      },
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthProvider>();
       if (auth.isAuthenticated && !auth.isGuest && auth.userModel != null) {
@@ -49,8 +85,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
     });
   }
-
-  final FirestoreService _firestoreService = FirestoreService();
 
   bool _requiresCardInfo(List<PaymentMethodModel> methods) {
     if (_selectedPaymentName.isEmpty || methods.isEmpty) return false;
@@ -71,6 +105,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   void dispose() {
+    _paymentSubscription.cancel();
     _nameController.dispose();
     _streetController.dispose();
     _cityController.dispose();
@@ -111,89 +146,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 12),
               
-              // Dynamic Payment Methods from Firestore
-              StreamBuilder<List<PaymentMethodModel>>(
-                stream: _firestoreService.getPaymentMethods(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Text(
-                        'Failed to load payment methods.',
-                        style: TextStyle(color: Colors.red.shade700),
-                      ),
-                    );
-                  }
-
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return const Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  
-                  final methods = snapshot.data ?? [];
-                  
-                  if (methods.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Text('No payment methods available.'),
-                    );
-                  }
-
-                  // Auto-select first method if none selected or current is invalid
-                  if (_selectedPaymentName.isEmpty ||
-                      !methods.any((m) => m.name == _selectedPaymentName)) {
-                    // Use sync assignment to avoid addPostFrameCallback rebuild loop
-                    _selectedPaymentName = methods.first.name;
-                  }
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ...methods.map((method) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: PaymentOptionTile(
-                            title: method.name,
-                            leading: _PaymentBrandDynamic(method: method),
-                            isSelected: _selectedPaymentName == method.name,
-                            onTap: () {
-                              setState(() {
-                                _selectedPaymentName = method.name;
-                              });
-                            },
-                          ),
-                        );
-                      }),
-                      if (_requiresCardInfo(methods)) ...[
-                        const SizedBox(height: 12),
-                        _CardPreview(cardNameController: _cardNameController),
-                        const SizedBox(height: 10),
-                        TextFormField(
-                          controller: _cardNameController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: _inputDecoration('Name on the card').copyWith(
-                            filled: true,
-                            fillColor: const Color(0xFF2A292C),
-                            labelStyle: const TextStyle(color: Colors.white70),
-                          ),
-                          validator: (value) {
-                            if (!_requiresCardInfo(methods)) {
-                              return null;
-                            }
-                            if ((value ?? '').trim().isEmpty) {
-                              return 'Enter the cardholder name';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              ),
+              // Payment Methods — built from cached local state (no StreamBuilder)
+              _buildPaymentMethodsSection(),
               const SizedBox(height: 18),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -326,6 +280,75 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
       ),
+    );
+  }
+  Widget _buildPaymentMethodsSection() {
+    if (_paymentMethodsError != null) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Text(
+          _paymentMethodsError!,
+          style: TextStyle(color: Colors.red.shade700),
+        ),
+      );
+    }
+
+    if (_paymentMethodsLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_paymentMethods.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Text('No payment methods available.'),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ..._paymentMethods.map((method) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: PaymentOptionTile(
+              title: method.name,
+              leading: _PaymentBrandDynamic(method: method),
+              isSelected: _selectedPaymentName == method.name,
+              onTap: () {
+                setState(() {
+                  _selectedPaymentName = method.name;
+                });
+              },
+            ),
+          );
+        }),
+        if (_requiresCardInfo(_paymentMethods)) ...[
+          const SizedBox(height: 12),
+          _CardPreview(cardNameController: _cardNameController),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _cardNameController,
+            style: const TextStyle(color: Colors.white),
+            decoration: _inputDecoration('Name on the card').copyWith(
+              filled: true,
+              fillColor: const Color(0xFF2A292C),
+              labelStyle: const TextStyle(color: Colors.white70),
+            ),
+            validator: (value) {
+              if (!_requiresCardInfo(_paymentMethods)) {
+                return null;
+              }
+              if ((value ?? '').trim().isEmpty) {
+                return 'Enter the cardholder name';
+              }
+              return null;
+            },
+          ),
+        ],
+      ],
     );
   }
 
