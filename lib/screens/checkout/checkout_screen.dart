@@ -147,21 +147,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                   return Column(
                     children: [
-                      for (final method in methods) ...[
-                        PaymentOptionTile(
-                          title: method.name,
-                          leading: _PaymentBrandDynamic(method: method),
-                          isSelected: _selectedPaymentName == method.name,
-                          onTap: () {
-                            setState(() {
-                              _selectedPaymentName = method.name;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                      ],
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: methods.map((method) {
+                          return SizedBox(
+                            width: (MediaQuery.of(context).size.width - 18 * 2 - 8) / 2,
+                            child: PaymentOptionTile(
+                              title: method.name,
+                              leading: _PaymentBrandDynamic(method: method),
+                              isSelected: _selectedPaymentName == method.name,
+                              onTap: () {
+                                setState(() {
+                                  _selectedPaymentName = method.name;
+                                });
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
                       if (_requiresCardInfo(methods)) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         _CardPreview(cardNameController: _cardNameController),
                         const SizedBox(height: 10),
                         TextFormField(
@@ -188,28 +194,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 },
               ),
               const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Shipping Information',
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Edit',
-                      style: TextStyle(
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Shipping Information',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
                         color: Colors.black,
-                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
-                ],
+                    TextButton(
+                      onPressed: () {},
+                      child: const Text(
+                        'Edit',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(height: 8),
               _SectionCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

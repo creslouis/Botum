@@ -20,6 +20,7 @@ class AdminOrderManagementScreen extends StatefulWidget {
 class _AdminOrderManagementScreenState
     extends State<AdminOrderManagementScreen> {
   String _filterStatus = 'all';
+  DateTime? _filterDate;
 
   @override
   Widget build(BuildContext context) {
@@ -80,10 +81,27 @@ class _AdminOrderManagementScreenState
               .where((o) => o.status == 'delivered')
               .length;
 
-          // Filter
-          final orders = _filterStatus == 'all'
+          // Filter by status
+          final statusFiltered = _filterStatus == 'all'
               ? allOrders
               : allOrders.where((o) => o.status == _filterStatus).toList();
+
+          // Filter by date
+          final orders = _filterDate == null
+              ? statusFiltered
+              : statusFiltered.where((o) {
+                  final orderDate = DateTime(
+                    o.createdAt.year,
+                    o.createdAt.month,
+                    o.createdAt.day,
+                  );
+                  final filterDate = DateTime(
+                    _filterDate!.year,
+                    _filterDate!.month,
+                    _filterDate!.day,
+                  );
+                  return orderDate.isAtSameMomentAs(filterDate);
+                }).toList();
 
           return Column(
             children: [
@@ -130,52 +148,155 @@ class _AdminOrderManagementScreenState
                 ),
               ),
 
-              // Filter chips
-              SizedBox(
-                height: 44,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children:
-                      [
-                        'all',
-                        'pending',
-                        'confirmed',
-                        'shipped',
-                        'delivered',
-                      ].map((status) {
-                        final isActive = _filterStatus == status;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            selected: isActive,
-                            label: Text(
-                              status == 'all'
-                                  ? 'All (${allOrders.length})'
-                                  : '${status[0].toUpperCase()}${status.substring(1)}',
-                              style: TextStyle(
-                                color: isActive
-                                    ? Colors.white
-                                    : AppColors.black,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
+              // Filter controls
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    // Status dropdown
+                    Expanded(
+                      child: Container(
+                        height: 44,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFE0E0E0)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _filterStatus,
+                            isExpanded: true,
+                            icon: const Icon(Icons.arrow_drop_down),
+                            style: const TextStyle(
+                              color: AppColors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
                             ),
-                            selectedColor: AppColors.primary,
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(
-                                color: isActive
-                                    ? AppColors.primary
-                                    : const Color(0xFFE0E0E0),
-                              ),
-                            ),
-                            onSelected: (_) =>
-                                setState(() => _filterStatus = status),
+                            items: [
+                              'all',
+                              'pending',
+                              'confirmed',
+                              'shipped',
+                              'delivered',
+                            ].map((status) {
+                              return DropdownMenuItem(
+                                value: status,
+                                child: Text(
+                                  status == 'all'
+                                      ? 'All Status'
+                                      : status[0].toUpperCase() +
+                                          status.substring(1),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _filterStatus = value);
+                              }
+                            },
                           ),
-                        );
-                      }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (_filterStatus != 'all')
+                      GestureDetector(
+                        onTap: () =>
+                            setState(() => _filterStatus = 'all'),
+                        child: Container(
+                          height: 44,
+                          width: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE0E0E0)),
+                          ),
+                          child: const Icon(
+                            Icons.clear,
+                            size: 18,
+                            color: AppColors.grey,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    // Date filter
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _filterDate ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) {
+                            setState(() => _filterDate = picked);
+                          }
+                        },
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _filterDate != null
+                                  ? AppColors.primary
+                                  : const Color(0xFFE0E0E0),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 16,
+                                color: _filterDate != null
+                                    ? AppColors.primary
+                                    : AppColors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _filterDate != null
+                                      ? Helpers.formatDate(_filterDate!)
+                                      : 'Pick date',
+                                  style: TextStyle(
+                                    color: _filterDate != null
+                                        ? AppColors.black
+                                        : AppColors.grey,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_filterDate != null) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () =>
+                            setState(() => _filterDate = null),
+                        child: Container(
+                          height: 44,
+                          width: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE0E0E0)),
+                          ),
+                          child: const Icon(
+                            Icons.clear,
+                            size: 18,
+                            color: AppColors.grey,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -185,7 +306,7 @@ class _AdminOrderManagementScreenState
                 child: orders.isEmpty
                     ? Center(
                         child: Text(
-                          'No $_filterStatus orders',
+                          'No${_filterStatus == 'all' ? '' : ' $_filterStatus'} orders${_filterDate != null ? ' on ${Helpers.formatDate(_filterDate!)}' : ''}',
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.grey,
                           ),
