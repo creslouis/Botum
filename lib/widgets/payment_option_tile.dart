@@ -20,10 +20,18 @@ class PaymentOptionTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Ink(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.72),
+          color: isSelected
+              ? const Color(0xFFFCE4F3)
+              : Colors.white.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFE91E8C)
+                : const Color(0xFFE8E8E8),
+            width: isSelected ? 1.5 : 1,
+          ),
         ),
         child: Row(
           children: [

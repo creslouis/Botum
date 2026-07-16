@@ -30,7 +30,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _cityController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cardNameController = TextEditingController();
-  String _selectedPaymentName = 'Mastercard';
+  String _selectedPaymentName = '';
   bool _isSubmitting = false;
 
   @override
@@ -53,14 +53,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final FirestoreService _firestoreService = FirestoreService();
 
   bool _requiresCardInfo(List<PaymentMethodModel> methods) {
-    try {
-      final method = methods.firstWhere((m) => m.name == _selectedPaymentName);
-      return method.requiresCard;
-    } catch (_) {
-      // Fallback logic for backward compatibility
-      return _selectedPaymentName.toLowerCase().contains('card') || 
-             _selectedPaymentName.toLowerCase().contains('paypal');
-    }
+    if (_selectedPaymentName.isEmpty || methods.isEmpty) return false;
+    final idx = methods.indexWhere((m) => m.name == _selectedPaymentName);
+    if (idx >= 0) return methods[idx].requiresCard;
+    // Fallback logic for backward compatibility
+    return _selectedPaymentName.toLowerCase().contains('card') || 
+           _selectedPaymentName.toLowerCase().contains('paypal');
   }
 
   String get _checkoutModeLabel {
@@ -117,7 +115,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               StreamBuilder<List<PaymentMethodModel>>(
                 stream: _firestoreService.getPaymentMethods(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        'Failed to load payment methods.',
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
                     return const Padding(
                       padding: EdgeInsets.all(20),
                       child: Center(child: CircularProgressIndicator()),
@@ -126,18 +135,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   
                   final methods = snapshot.data ?? [];
                   
-                  // Ensure selected payment is valid, or fallback to first
-                  if (methods.isNotEmpty && 
-                      !methods.any((m) => m.name == _selectedPaymentName)) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) {
-                        setState(() {
-                          _selectedPaymentName = methods.first.name;
-                        });
-                      }
-                    });
-                  }
-                  
                   if (methods.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.all(20),
@@ -145,27 +142,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     );
                   }
 
+                  // Auto-select first method if none selected or current is invalid
+                  if (_selectedPaymentName.isEmpty ||
+                      !methods.any((m) => m.name == _selectedPaymentName)) {
+                    // Use sync assignment to avoid addPostFrameCallback rebuild loop
+                    _selectedPaymentName = methods.first.name;
+                  }
+
                   return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: methods.map((method) {
-                          return SizedBox(
-                            width: (MediaQuery.of(context).size.width - 18 * 2 - 8) / 2,
-                            child: PaymentOptionTile(
-                              title: method.name,
-                              leading: _PaymentBrandDynamic(method: method),
-                              isSelected: _selectedPaymentName == method.name,
-                              onTap: () {
-                                setState(() {
-                                  _selectedPaymentName = method.name;
-                                });
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                      ...methods.map((method) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: PaymentOptionTile(
+                            title: method.name,
+                            leading: _PaymentBrandDynamic(method: method),
+                            isSelected: _selectedPaymentName == method.name,
+                            onTap: () {
+                              setState(() {
+                                _selectedPaymentName = method.name;
+                              });
+                            },
+                          ),
+                        );
+                      }),
                       if (_requiresCardInfo(methods)) ...[
                         const SizedBox(height: 12),
                         _CardPreview(cardNameController: _cardNameController),

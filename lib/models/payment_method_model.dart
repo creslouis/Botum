@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PaymentMethodModel {
   final String id;
   final String name;
@@ -20,6 +22,16 @@ class PaymentMethodModel {
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
+  /// Parse a dynamic value that could be a Firestore Timestamp, an ISO string,
+  /// or null into a DateTime. Returns fallback on failure.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -41,12 +53,8 @@ class PaymentMethodModel {
       isActive: map['isActive'] as bool? ?? true,
       sortOrder: (map['sortOrder'] as num?)?.toInt() ?? 0,
       requiresCard: map['requiresCard'] as bool? ?? false,
-      createdAt: map['createdAt'] != null
-          ? DateTime.tryParse(map['createdAt'] as String) ?? DateTime.now()
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.tryParse(map['updatedAt'] as String) ?? DateTime.now()
-          : DateTime.now(),
+      createdAt: _parseDateTime(map['createdAt']),
+      updatedAt: _parseDateTime(map['updatedAt']),
     );
   }
 
